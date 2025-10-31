@@ -18,7 +18,8 @@ async function getArticle(slug: string) {
 export default async function ArticlePage({
 	params,
 }: { params: { slug: string } }) {
-	const { slug } = params;
+	// <-- pas Promise
+	const { slug } = params; // <-- pas besoin d'await
 
 	if (!slug) return <div>Slug manquant dans l'URL</div>;
 
