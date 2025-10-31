@@ -2,7 +2,7 @@ import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 
 async function getArticle(slug: string) {
 	const res = await fetch(
-		`http://localhost:1337/api/articles?filters[slug][$eq]=${slug}&populate=*`,
+		`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=*`,
 		{ next: { revalidate: 10 } },
 	);
 	if (!res.ok) {

@@ -9,9 +9,12 @@ export const metadata: Metadata = {
 };
 
 async function getArticles() {
-	const res = await fetch("http://localhost:1337/api/articles?populate=*", {
-		next: { revalidate: 10 },
-	});
+	const res = await fetch(
+		`${process.env.NEXT_PUBLIC_API_URL}/api/articles?populate=*`,
+		{
+			next: { revalidate: 10 },
+		},
+	);
 
 	if (!res.ok) throw new Error("Erreur récupération articles");
 
