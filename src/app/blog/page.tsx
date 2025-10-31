@@ -14,6 +14,7 @@ async function getArticles() {
 		const res = await fetch(
 			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?populate=*`,
 			{
+				// Cache : Revalidation tous les 10 secondes. C'est bien.
 				next: { revalidate: 10 },
 			},
 		);
@@ -21,7 +22,17 @@ async function getArticles() {
 		if (!res.ok) throw new Error("Erreur récupération articles");
 
 		const data = await res.json();
-		return data.data;
+
+		// 🚨 CORRECTION CLÉ : Mappage pour extraire les "attributes"
+		// On retourne un tableau d'articles nettoyés, prêts à être utilisés par BlogList.
+		if (Array.isArray(data.data)) {
+			return data.data.map((item: any) => ({
+				id: item.id, // On garde l'ID Strapi
+				...item.attributes, // On déstructure les attributs (title, slug, content, etc.)
+			}));
+		}
+
+		return [];
 	} catch (error) {
 		console.error("Erreur fetch articles:", error);
 		return [];
@@ -30,6 +41,17 @@ async function getArticles() {
 
 export default async function BlogPage() {
 	const articles = await getArticles();
+
+	// 💡 Astuce : Afficher un message si aucun article n'est trouvé
+	if (articles.length === 0) {
+		return (
+			<section className="container mx-auto px-4 py-16 max-w-5xl text-center">
+				<h2 className="text-3xl font-bold text-gray-700">
+					Aucun article n'a été publié pour le moment.
+				</h2>
+			</section>
+		);
+	}
 
 	return (
 		<>
@@ -47,6 +69,7 @@ export default async function BlogPage() {
 			</div>
 
 			<section className="container mx-auto px-4 py-16 max-w-5xl">
+				{/* articles est maintenant un tableau d'objets avec les propriétés directes */}
 				<BlogList articles={articles} />
 			</section>
 		</>
