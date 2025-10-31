@@ -30,8 +30,33 @@ interface ArticleData {
 	content: any;
 	coverImage: StrapiCoverImage | null;
 }
-// ----------------------------
 
+// --- NOUVELLE FONCTION POUR LES SLUGS ---
+export async function generateStaticParams() {
+	try {
+		const res = await fetch(
+			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?fields[0]=slug`,
+			{ next: { revalidate: 3600 } }, // Récupère seulement les slugs, avec un cache d'une heure
+		);
+
+		if (!res.ok) {
+			console.error("Erreur de récupération des slugs:", res.status);
+			return [];
+		}
+
+		const data = await res.json();
+
+		// Mappez les données pour retourner un tableau d'objets { slug: string }
+		return data.data.map((item: any) => ({
+			slug: item.attributes.slug,
+		}));
+	} catch (error) {
+		console.error("Erreur dans generateStaticParams:", error);
+		return [];
+	}
+}
+
+// ----------------------------
 async function getArticle(slug: string): Promise<ArticleData | null> {
 	try {
 		const res = await fetch(

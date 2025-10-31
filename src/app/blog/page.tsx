@@ -14,7 +14,7 @@ async function getArticles() {
 		const res = await fetch(
 			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?populate=*`,
 			{
-				next: { revalidate: 10 },
+				next: { revalidate: 0, cache: "no-store" },
 			},
 		);
 
