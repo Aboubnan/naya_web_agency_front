@@ -1,21 +1,24 @@
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 
 async function getArticle(slug: string) {
-	const res = await fetch(
-		`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=*`,
-		{ next: { revalidate: 10 } },
-	);
-	if (!res.ok) {
-		throw new Error("Impossible de récupérer l'article");
+	try {
+		const res = await fetch(
+			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=*`,
+			{ cache: "no-store" },
+		);
+		if (!res.ok) throw new Error("Impossible de récupérer l'article");
+		const data = await res.json();
+		return data.data[0] || null;
+	} catch (err) {
+		console.error("Erreur fetch article :", err);
+		return null;
 	}
-	const data = await res.json();
-	return data.data[0] || null;
 }
 
 export default async function ArticlePage({
 	params,
-}: { params: Promise<{ slug: string }> }) {
-	const { slug } = await params;
+}: { params: { slug: string } }) {
+	const { slug } = params;
 
 	if (!slug) return <div>Slug manquant dans l'URL</div>;
 
@@ -24,14 +27,11 @@ export default async function ArticlePage({
 	if (!article) return <div>Article introuvable pour le slug : {slug}</div>;
 
 	const { title, publishedDate, content, coverImage } = article;
-	console.log("image", coverImage);
-
-	const baseUrl = "http://localhost:1337"; // URL de ton serveur Strapi
 
 	const imageUrl = coverImage?.url
 		? coverImage.url.startsWith("http")
 			? coverImage.url
-			: baseUrl + coverImage.url
+			: `${process.env.NEXT_PUBLIC_API_URL}${coverImage.url}`
 		: null;
 
 	return (
