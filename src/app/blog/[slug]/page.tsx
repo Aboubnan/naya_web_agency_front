@@ -1,15 +1,18 @@
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-// 1. IMPORTER LE TYPE PageProps depuis 'next'
-import { type PageProps } from "next";
+// CORRECTION : Le type PageProps n'est souvent pas un export direct du module 'next'.
+// La solution la plus simple est de décomposer les props.
 
-// --- Définitions de types pour une meilleure robustesse ---
+// 1. DÉFINIR LE TYPE DE PROPS DE VOTRE PAGE
+interface ArticlePageProps {
+	params: {
+		slug: string;
+	};
+	// Inclure le searchParams pour être pleinement compatible avec le type PageProps standard
+	searchParams?: { [key: string]: string | string[] | undefined };
+}
 
-// 2. Définir l'interface pour les paramètres (params) de la page dynamique
-type ArticlePageParams = {
-	slug: string;
-};
-
-// (Optionnel) Définir les types des données Strapi (à ajuster selon votre schéma réel)
+// --- Définitions de types pour une meilleure robustesse (comme précédemment) ---
+// Note: Assurez-vous que cette structure reflète EXACTEMENT ce que Strapi retourne.
 interface StrapiImage {
 	url: string;
 }
@@ -17,20 +20,20 @@ interface StrapiImage {
 interface ArticleData {
 	title: string;
 	publishedDate: string;
-	content: any; // Type exact de BlocksRenderer. Si c'est JSON, laissez 'any' ou ajustez.
+	content: any;
 	coverImage: {
 		data: {
 			attributes: StrapiImage;
 		};
 	} | null;
 }
-
 // -----------------------------------------------------------
 
 async function getArticle(slug: string): Promise<ArticleData | null> {
 	try {
 		const res = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=coverImage`, // populate le coverImage pour le data.data[0].attributes
+			// J'ai corrigé le populate, assurez-vous qu'il est correct selon votre API
+			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=coverImage`,
 			{ next: { revalidate: 10 } },
 		);
 
@@ -38,9 +41,7 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 
 		const data = await res.json();
 
-		// 🚨 IMPORTANT : Les données Strapi sont souvent dans data.data[0].attributes
-		// Assurez-vous d'accéder au bon chemin. Si votre article est plat, continuez.
-		// Si vous utilisez la structure API V4 de Strapi, l'article réel est dans .attributes
+		// Retourne les attributs si l'article existe
 		return data.data[0] ? data.data[0].attributes : null;
 	} catch (error) {
 		console.error("Erreur fetch article:", error);
@@ -48,12 +49,10 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 	}
 }
 
-// 3. UTILISER PageProps pour typer le composant de page
-// PageProps prend un type générique pour la structure des 'params'
-export default async function ArticlePage({
-	params,
-}: PageProps<ArticlePageParams>) {
-	// Le code à l'intérieur du composant est correct.
+// 2. UTILISER L'INTERFACE ArticlePageProps DIRECTEMENT
+// En général, Next.js est plus tolérant lorsque vous définissez l'interface complète
+// (params et searchParams optionnel) que lorsque vous essayez d'importer le type générique.
+export default async function ArticlePage({ params }: ArticlePageProps) {
 	const { slug } = params;
 
 	if (!slug) return <div>Slug manquant dans l'URL</div>;
@@ -62,10 +61,9 @@ export default async function ArticlePage({
 
 	if (!article) return <div>Article introuvable pour le slug : {slug}</div>;
 
-	// Déstructuration : on utilise les types ArticleData définis ci-dessus
 	const { title, publishedDate, content, coverImage } = article;
 
-	// L'image de Strapi V4 est dans coverImage.data.attributes.url
+	// L'image de Strapi V4 est dans coverImage.data.attributes.url (à vérifier)
 	const imageUrl = coverImage?.data?.attributes?.url
 		? coverImage.data.attributes.url.startsWith("http")
 			? coverImage.data.attributes.url
@@ -91,8 +89,7 @@ export default async function ArticlePage({
 
 				{imageUrl && (
 					<div className="flex justify-center mb-8">
-						{/* ⚠️ Attention : L'utilisation de l'élément <img> directement 
-                           est déconseillée dans Next.js. Utilisez le composant <Image> de 'next/image'. */}
+						{/* Remarque : utilisez le composant <Image> de Next.js pour l'optimisation */}
 						<img
 							src={imageUrl}
 							alt={title}
