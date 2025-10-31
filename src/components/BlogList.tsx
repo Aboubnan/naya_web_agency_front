@@ -10,7 +10,19 @@ type Article = {
 	publishedDate?: string;
 	excerpt?: string;
 	description?: string;
-	category: string;
+	category?: string; // 🚨 Rendre la catégorie OPTIONNELLE ici
+	// Important : il manquait aussi la coverImage pour la liste !
+	// Si vous affichez une image dans BlogList, elle doit être dans le type Article
+	coverImage?: {
+		id: number;
+		url: string;
+		// Ajoutez d'autres formats si vous les utilisez
+		formats?: {
+			small?: { url: string; width: number; height: number };
+			medium?: { url: string; width: number; height: number };
+			// ...
+		};
+	};
 };
 
 type BlogListProps = {
@@ -23,16 +35,21 @@ export default function BlogList({ articles }: BlogListProps) {
 
 	// Tri, filtrage et recherche combinés
 	const filteredArticles = useMemo(() => {
-		return [...articles] // on clone pour éviter de modifier la prop
+		return [...articles]
 			.sort((a, b) => {
 				const dateA = a.publishedDate ? new Date(a.publishedDate).getTime() : 0;
 				const dateB = b.publishedDate ? new Date(b.publishedDate).getTime() : 0;
 				return dateB - dateA; // du plus récent au plus ancien
 			})
 			.filter((article) => {
+				// 🚨 CORRECTION ICI : Vérifier si article.category existe
+				const articleCategoryLower = article.category?.toLowerCase(); // Utiliser l'opérateur de chaînage optionnel `?.`
+				const filterCategoryLower = filterCategory.toLowerCase(); // filterCategory ne sera jamais undefined ici car initialisé à ""
+
 				const matchesCategory = filterCategory
-					? article.category.toLowerCase() === filterCategory.toLowerCase()
+					? articleCategoryLower === filterCategoryLower // Comparer les versions lowercase
 					: true;
+
 				const matchesSearch = article.title
 					.toLowerCase()
 					.includes(searchTerm.toLowerCase());
@@ -74,13 +91,41 @@ export default function BlogList({ articles }: BlogListProps) {
 					<p>Aucun article ne correspond aux critères.</p>
 				) : (
 					filteredArticles.map(
-						({ id, slug, title, publishedDate, excerpt }) => (
+						(
+							{ id, slug, title, publishedDate, excerpt, category, coverImage }, // 🚨 Ajoutez category et coverImage si vous les utilisez
+						) => (
 							<Link href={`/blog/${slug}`} key={id}>
 								<div className="block h-full bg-white shadow-lg rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+									{/* 🚨 Ajoutez l'affichage de l'image ici si vous en avez une ! */}
+									{/* N'oubliez pas l'import de Image de 'next/image' si ce n'est pas déjà fait */}
+									{/* Et le NEXT_PUBLIC_API_URL pour les chemins relatifs de Strapi */}
+									{coverImage?.url && (
+										<div className="relative h-48 w-full">
+											<Image
+												src={
+													coverImage.url.startsWith("http")
+														? coverImage.url
+														: `${process.env.NEXT_PUBLIC_API_URL}${coverImage.url}`
+												}
+												alt={title}
+												fill // Utilisez fill pour que l'image s'adapte au conteneur
+												style={{ objectFit: "cover" }} // 'cover' pour garder le ratio
+												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Optimisation responsive
+												className="rounded-t-lg"
+											/>
+										</div>
+									)}
+
 									<div className="p-6">
 										<h2 className="text-xl font-semibold text-gray-800 mb-2 text-center">
 											{title}
 										</h2>
+										{/* Affichage de la catégorie si elle existe */}
+										{category && (
+											<p className="text-sm font-medium text-indigo-600 text-center mb-2">
+												{category}
+											</p>
+										)}
 										{publishedDate && (
 											<p className="text-gray-500 text-sm text-center">
 												{new Date(publishedDate).toLocaleDateString("fr-FR")}
