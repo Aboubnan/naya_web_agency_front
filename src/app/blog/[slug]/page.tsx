@@ -1,6 +1,12 @@
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 // CORRECTION : Le type PageProps n'est souvent pas un export direct du module 'next'.
 // La solution la plus simple est de décomposer les props.
+import { type PageProps } from "next";
+
+// Définition de types pour la fonction (facultatif mais bonne pratique)
+type ArticlePageParams = {
+	slug: string;
+};
 
 // 1. DÉFINIR LE TYPE DE PROPS DE VOTRE PAGE
 interface ArticlePageProps {
@@ -52,7 +58,9 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 // 2. UTILISER L'INTERFACE ArticlePageProps DIRECTEMENT
 // En général, Next.js est plus tolérant lorsque vous définissez l'interface complète
 // (params et searchParams optionnel) que lorsque vous essayez d'importer le type générique.
-export default async function ArticlePage({ params }: ArticlePageProps) {
+export default async function ArticlePage({
+	params,
+}: PageProps<ArticlePageParams>) {
 	const { slug } = params;
 
 	if (!slug) return <div>Slug manquant dans l'URL</div>;
