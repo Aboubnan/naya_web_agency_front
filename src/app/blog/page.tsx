@@ -14,7 +14,9 @@ async function getArticles() {
 		const res = await fetch(
 			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?populate=*`,
 			{
-				next: { revalidate: 0, cache: "no-store" },
+				// 🚨 CORRECTION ICI : 'cache' est une option directe de fetch, pas dans 'next'
+				cache: "no-store", // Désactive complètement le cache pour ce fetch
+				// next: { revalidate: 0 }, // Vous pouvez laisser 'revalidate: 0' si vous le souhaitez, mais 'no-store' est plus fort pour le test.
 			},
 		);
 
