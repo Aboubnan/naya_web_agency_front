@@ -1,13 +1,17 @@
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-// CORRECTION CLÉ : Import de PageProps depuis 'next/types' (ou 'next')
-import { type PageProps } from "next/types";
-import Image from "next/image"; // Import pour la bonne pratique
+import Image from "next/image";
+// SUPPRIMEZ les imports de 'PageProps' (ni 'next' ni 'next/types')
 
 // --- Définitions de types ---
 
-type ArticlePageParams = {
-	slug: string;
-};
+// Le type complet attendu par le composant de Page dans l'App Router
+interface ArticlePageProps {
+	params: {
+		slug: string;
+	};
+	// Ajouter searchParams pour être complet, même s'ils ne sont pas utilisés
+	searchParams?: { [key: string]: string | string[] | undefined };
+}
 
 interface StrapiImageAttributes {
 	url: string;
@@ -40,7 +44,6 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 
 		const data = await res.json();
 
-		// Accès aux attributs Strapi
 		return data.data[0] ? (data.data[0].attributes as ArticleData) : null;
 	} catch (error) {
 		console.error("Erreur fetch article:", error);
@@ -48,9 +51,8 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 	}
 }
 
-export default async function ArticlePage({
-	params,
-}: PageProps<ArticlePageParams>) {
+// Utiliser l'interface complète ArticlePageProps
+export default async function ArticlePage({ params }: ArticlePageProps) {
 	const { slug } = params;
 
 	if (!slug) return <div>Slug manquant dans l'URL</div>;
