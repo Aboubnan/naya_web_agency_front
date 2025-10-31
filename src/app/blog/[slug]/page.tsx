@@ -1,45 +1,37 @@
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-// CORRECTION : Le type PageProps n'est souvent pas un export direct du module 'next'.
-// La solution la plus simple est de décomposer les props.
-// On importe le type PageProps depuis le module 'next/types'
+// CORRECTION CLÉ : Import de PageProps depuis 'next/types' (ou 'next')
 import { type PageProps } from "next/types";
+import Image from "next/image"; // Import pour la bonne pratique
 
-// Définition de types pour la fonction (facultatif mais bonne pratique)
+// --- Définitions de types ---
+
 type ArticlePageParams = {
 	slug: string;
 };
 
-// 1. DÉFINIR LE TYPE DE PROPS DE VOTRE PAGE
-interface ArticlePageProps {
-	params: {
-		slug: string;
-	};
-	// Inclure le searchParams pour être pleinement compatible avec le type PageProps standard
-	searchParams?: { [key: string]: string | string[] | undefined };
+interface StrapiImageAttributes {
+	url: string;
+	width: number;
+	height: number;
 }
 
-// --- Définitions de types pour une meilleure robustesse (comme précédemment) ---
-// Note: Assurez-vous que cette structure reflète EXACTEMENT ce que Strapi retourne.
-interface StrapiImage {
-	url: string;
+interface StrapiCoverImage {
+	data: {
+		attributes: StrapiImageAttributes;
+	} | null;
 }
 
 interface ArticleData {
 	title: string;
 	publishedDate: string;
 	content: any;
-	coverImage: {
-		data: {
-			attributes: StrapiImage;
-		};
-	} | null;
+	coverImage: StrapiCoverImage | null;
 }
-// -----------------------------------------------------------
+// ----------------------------
 
 async function getArticle(slug: string): Promise<ArticleData | null> {
 	try {
 		const res = await fetch(
-			// J'ai corrigé le populate, assurez-vous qu'il est correct selon votre API
 			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=coverImage`,
 			{ next: { revalidate: 10 } },
 		);
@@ -48,17 +40,14 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 
 		const data = await res.json();
 
-		// Retourne les attributs si l'article existe
-		return data.data[0] ? data.data[0].attributes : null;
+		// Accès aux attributs Strapi
+		return data.data[0] ? (data.data[0].attributes as ArticleData) : null;
 	} catch (error) {
 		console.error("Erreur fetch article:", error);
 		return null;
 	}
 }
 
-// 2. UTILISER L'INTERFACE ArticlePageProps DIRECTEMENT
-// En général, Next.js est plus tolérant lorsque vous définissez l'interface complète
-// (params et searchParams optionnel) que lorsque vous essayez d'importer le type générique.
 export default async function ArticlePage({
 	params,
 }: PageProps<ArticlePageParams>) {
@@ -72,11 +61,12 @@ export default async function ArticlePage({
 
 	const { title, publishedDate, content, coverImage } = article;
 
-	// L'image de Strapi V4 est dans coverImage.data.attributes.url (à vérifier)
-	const imageUrl = coverImage?.data?.attributes?.url
-		? coverImage.data.attributes.url.startsWith("http")
-			? coverImage.data.attributes.url
-			: `${process.env.NEXT_PUBLIC_API_URL}${coverImage.data.attributes.url}`
+	const imageAttrs = coverImage?.data?.attributes;
+
+	const imageUrl = imageAttrs?.url
+		? imageAttrs.url.startsWith("http")
+			? imageAttrs.url
+			: `${process.env.NEXT_PUBLIC_API_URL}${imageAttrs.url}`
 		: null;
 
 	return (
@@ -96,14 +86,13 @@ export default async function ArticlePage({
 					</p>
 				)}
 
-				{imageUrl && (
+				{imageUrl && imageAttrs && (
 					<div className="flex justify-center mb-8">
-						{/* Remarque : utilisez le composant <Image> de Next.js pour l'optimisation */}
-						<img
+						<Image
 							src={imageUrl}
 							alt={title}
-							width={800}
-							height={400}
+							width={imageAttrs.width || 800}
+							height={imageAttrs.height || 400}
 							className="object-cover rounded mb-8"
 						/>
 					</div>
