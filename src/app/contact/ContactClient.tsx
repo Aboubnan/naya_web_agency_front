@@ -24,21 +24,30 @@ const ContactPage = () => {
 		setStatus("Envoi en cours...");
 
 		try {
+			// 🚨 CORRECTION ICI : Utilisation de la variable d'environnement
+			const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+			if (!apiUrl) {
+				throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
+			}
+
 			const response = await fetch(
-				"http://localhost:1337/api/contact-messages/send",
+				`${apiUrl}/api/contact-messages`, // J'ai retiré '/send' - voir explication ci-dessous
 				{
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify(formData),
+					body: JSON.stringify({ data: formData }), // 🚨 CORRECTION ICI : Ajouter 'data' pour Strapi v4
 				},
 			);
 
 			if (!response.ok) {
 				const errorData = await response.json();
+				console.error("Erreur détaillée de l'API:", errorData); // Pour le debug
 				throw new Error(
-					errorData.message || "Erreur lors de l'envoi du message.",
+					errorData.error?.message ||
+						errorData.message ||
+						"Erreur lors de l'envoi du message.",
 				);
 			}
 
@@ -46,7 +55,7 @@ const ContactPage = () => {
 			setFormData({ name: "", firstName: "", email: "", message: "" });
 		} catch (error: any) {
 			setStatus(`Erreur : ${error.message}`);
-			console.error(error);
+			console.error("Erreur d'envoi du formulaire:", error);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -55,7 +64,7 @@ const ContactPage = () => {
 	return (
 		<section className="py-20">
 			<div className="container mx-auto px-4 text-center">
-				<div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center  bg-gray-100 py-10">
+				<div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center bg-gray-100 py-10">
 					<div className="md:w-1/2 text-center md:text-left">
 						<h1 className="text-center text-5xl md:text-4xl font-extrabold text-gray-800 leading-tight mb-4">
 							Contactez-nous
