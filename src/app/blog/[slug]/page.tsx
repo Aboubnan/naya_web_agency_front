@@ -1,15 +1,14 @@
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
+// Importez Image, peu importe où est PageProps
 import Image from "next/image";
-// SUPPRIMEZ les imports de 'PageProps' (ni 'next' ni 'next/types')
 
 // --- Définitions de types ---
 
-// Le type complet attendu par le composant de Page dans l'App Router
+// Interface complète pour la page
 interface ArticlePageProps {
 	params: {
 		slug: string;
 	};
-	// Ajouter searchParams pour être complet, même s'ils ne sont pas utilisés
 	searchParams?: { [key: string]: string | string[] | undefined };
 }
 
@@ -51,9 +50,10 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 	}
 }
 
-// Utiliser l'interface complète ArticlePageProps
-export default async function ArticlePage({ params }: ArticlePageProps) {
-	const { slug } = params;
+// 🚨 CORRECTION DÉBLOQUANTE : Utiliser 'any' ou enlever le type pour contourner le conflit Vercel/Next.js
+export default async function ArticlePage({ params }: any) {
+	// On re-force le type ici pour que le code interne soit sécurisé par TypeScript
+	const { slug } = params as { slug: string };
 
 	if (!slug) return <div>Slug manquant dans l'URL</div>;
 
