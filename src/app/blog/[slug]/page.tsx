@@ -1,4 +1,3 @@
-// app/blog/[slug]/page.tsx
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 
 type ArticlePageProps = {
@@ -7,16 +6,13 @@ type ArticlePageProps = {
 	};
 };
 
-// Récupération d'un article par slug
 async function getArticle(slug: string) {
 	try {
 		const res = await fetch(
 			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=*`,
 			{ next: { revalidate: 10 } },
 		);
-
 		if (!res.ok) throw new Error("Impossible de récupérer l'article");
-
 		const data = await res.json();
 		return data.data[0] || null;
 	} catch (error) {
@@ -26,7 +22,7 @@ async function getArticle(slug: string) {
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
-	const { slug } = params;
+	const { slug } = params; // <-- ici pas de Promise
 
 	if (!slug) return <div>Slug manquant dans l'URL</div>;
 
