@@ -1,7 +1,8 @@
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 // CORRECTION : Le type PageProps n'est souvent pas un export direct du module 'next'.
 // La solution la plus simple est de décomposer les props.
-import { type PageProps } from "next";
+// On importe le type PageProps depuis le module 'next/types'
+import { type PageProps } from "next/types";
 
 // Définition de types pour la fonction (facultatif mais bonne pratique)
 type ArticlePageParams = {
