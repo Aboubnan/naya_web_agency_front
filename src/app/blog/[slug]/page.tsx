@@ -2,7 +2,7 @@ import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 
 type ArticlePageProps = {
 	params: {
-		slug: string;
+		slug: string; // ✅ simple string, pas de Promise
 	};
 };
 
