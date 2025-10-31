@@ -57,7 +57,7 @@ const ServiceCard = ({
 }: ServiceCardProps) => {
 	// ... (Le code pour resizedIcon reste le même)
 	const resizedIcon = isValidElement(icon)
-		? React.cloneElement(icon, {
+		? React.cloneElement(icon as ReactElement<React.SVGProps<SVGSVGElement>>, {
 				width: iconSize,
 				height: iconSize,
 			})
