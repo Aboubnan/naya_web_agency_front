@@ -23,12 +23,14 @@ async function getArticles() {
 		const data = await res.json();
 
 		if (Array.isArray(data.data)) {
-			return data.data.map((item: any) => ({
-				id: item.id,
-				// 🚨 CORRECTION ICI : S'assurer que 'category' est une chaîne, même vide, si absente
-				category: item.attributes.category || "", // Assure que category est une string
-				...item.attributes,
-			}));
+			return data.data
+				.filter((item: any) => item.attributes) // 🚨 AJOUTEZ CETTE LIGNE : Filtrer les éléments sans 'attributes'
+				.map((item: any) => ({
+					id: item.id,
+					// S'assurer que 'category' est une chaîne, même vide, si absente
+					category: item.attributes.category || "",
+					...item.attributes,
+				}));
 		}
 
 		return [];
