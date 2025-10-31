@@ -66,7 +66,7 @@ export async function generateStaticParams() {
 async function getArticle(slug: string): Promise<ArticleData | null> {
 	try {
 		const res = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=coverImage`,
+			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eqi]=${slug}&populate=coverImage`,
 			{ next: { revalidate: 10 } },
 		);
 
