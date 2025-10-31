@@ -22,8 +22,8 @@ const Modal = ({ isOpen, onClose, service }: ModalProps) => {
 
 	// Redimensionner l'icône dans la modale (optionnel, on peut la rendre plus grande)
 	const resizedIcon = React.isValidElement(service.icon)
-		? React.cloneElement(service.icon, {
-				className: "w-16 h-16 text-blue-600", // Tailwind pour la taille et couleur
+		? React.cloneElement(service.icon as React.ReactElement<any>, {
+				className: "w-16 h-16 text-blue-600",
 			})
 		: null;
 
