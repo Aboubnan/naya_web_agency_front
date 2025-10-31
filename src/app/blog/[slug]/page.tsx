@@ -36,7 +36,7 @@ export async function generateStaticParams() {
 	try {
 		const res = await fetch(
 			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?fields[0]=slug`,
-			{ next: { revalidate: 3600 } }, // Récupère seulement les slugs, avec un cache d'une heure
+			{ next: { revalidate: 3600 } },
 		);
 
 		if (!res.ok) {
@@ -46,10 +46,16 @@ export async function generateStaticParams() {
 
 		const data = await res.json();
 
-		// Mappez les données pour retourner un tableau d'objets { slug: string }
-		return data.data.map((item: any) => ({
-			slug: item.attributes.slug,
-		}));
+		if (!Array.isArray(data.data)) {
+			// Ajout d'une vérification au cas où data.data n'est pas un tableau
+			return [];
+		}
+
+		return data.data
+			.filter((item: any) => item.attributes?.slug) // 🚨 CORRECTION ICI : Filtrer les items sans slug ou attributes
+			.map((item: any) => ({
+				slug: item.attributes.slug,
+			}));
 	} catch (error) {
 		console.error("Erreur dans generateStaticParams:", error);
 		return [];
