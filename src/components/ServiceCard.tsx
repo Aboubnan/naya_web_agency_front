@@ -38,6 +38,8 @@
 // export default ServiceCard;
 
 // components/ServiceCard.tsx
+
+// components/ServiceCard.tsx
 import React, { ReactElement, isValidElement } from "react";
 
 type ServiceCardProps = {
@@ -45,7 +47,7 @@ type ServiceCardProps = {
 	description: string;
 	icon: ReactElement;
 	iconSize?: number;
-	onClick: () => void; // <--- NOUVEAU : Fonction à exécuter lors du clic
+	onClick?: () => void; // rendu optionnel
 };
 
 const ServiceCard = ({
@@ -53,9 +55,9 @@ const ServiceCard = ({
 	description,
 	icon,
 	iconSize = 130,
-	onClick, // <--- AJOUTÉ
+	onClick,
 }: ServiceCardProps) => {
-	// ... (Le code pour resizedIcon reste le même)
+	// Vérifie que l'icône est bien un élément valide avant de la cloner
 	const resizedIcon = isValidElement(icon)
 		? React.cloneElement(icon as ReactElement<React.SVGProps<SVGSVGElement>>, {
 				width: iconSize,
@@ -64,10 +66,9 @@ const ServiceCard = ({
 		: null;
 
 	return (
-		// AJOUTER les classes de style pour le clic et le curseur
 		<div
 			className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 cursor-pointer"
-			onClick={onClick} // <--- AJOUTÉ l'événement de clic
+			onClick={onClick} // Ne posera plus d'erreur si undefined
 		>
 			<div className="text-blue-600 mb-2 flex justify-center">
 				{resizedIcon}
