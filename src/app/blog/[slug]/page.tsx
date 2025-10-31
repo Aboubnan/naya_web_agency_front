@@ -12,7 +12,9 @@ async function getArticle(slug: string) {
 			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eq]=${slug}&populate=*`,
 			{ next: { revalidate: 10 } },
 		);
+
 		if (!res.ok) throw new Error("Impossible de récupérer l'article");
+
 		const data = await res.json();
 		return data.data[0] || null;
 	} catch (error) {
@@ -22,7 +24,7 @@ async function getArticle(slug: string) {
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
-	const { slug } = params; // <-- ici pas de Promise
+	const { slug } = params; // ✅ pas de Promise ici
 
 	if (!slug) return <div>Slug manquant dans l'URL</div>;
 
