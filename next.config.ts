@@ -8,9 +8,8 @@ const nextConfig = {
     // Liste des domaines autorisés pour les images
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '1337', // Le port de votre serveur Strapi
+        protocol: 'https',
+        hostname: 'api.nayaweb.fr', // ton Strapi exposé via Nginx
       },
     ],
   },
