@@ -1,3 +1,4 @@
+// src/app/contact/ContactClient.tsx
 "use client";
 import { useState } from "react";
 
@@ -24,33 +25,35 @@ const ContactPage = () => {
 		setStatus("Envoi en cours...");
 
 		try {
-			// 🚨 CORRECTION ICI : Utilisation de la variable d'environnement
+			// Utilisation de la variable d'environnement
 			const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 			if (!apiUrl) {
 				throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
 			}
 
 			const response = await fetch(
-				`${apiUrl}/api/contact-messages`, // J'ai retiré '/send' - voir explication ci-dessous
+				// 💡 CHANGEMENT 1 : Utilisation d'un endpoint générique pour le contact
+				`${apiUrl}/api/contact`,
 				{
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ data: formData }), // 🚨 CORRECTION ICI : Ajouter 'data' pour Strapi v4
+					// 💡 CHANGEMENT 2 : Envoi direct du formData (sans le wrapper 'data')
+					body: JSON.stringify(formData),
 				},
 			);
 
 			if (!response.ok) {
+				// ... (Le bloc de gestion des erreurs reste bon)
 				const errorData = await response.json();
-				console.error("Erreur détaillée de l'API:", errorData); // Pour le debug
+				console.error("Erreur détaillée de l'API:", errorData);
 				throw new Error(
-					errorData.error?.message ||
-						errorData.message ||
-						"Erreur lors de l'envoi du message.",
+					errorData.message || "Erreur lors de l'envoi du message.",
 				);
 			}
 
+			// ... (Le succès reste bon)
 			setStatus("Message envoyé avec succès !");
 			setFormData({ name: "", firstName: "", email: "", message: "" });
 		} catch (error: any) {

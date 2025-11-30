@@ -8,29 +8,39 @@ export const metadata: Metadata = {
 		"Découvrez nos articles et conseils sur le développement web et la transformation digitale.",
 };
 
-// Fonction pour récupérer les articles depuis Strapi
-async function getArticles() {
-	try {
-		const res = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?populate=*`,
-			{
-				next: { revalidate: 3600 },
-			},
-		);
+// --- NOUVELLE INTERFACE SIMPLIFIÉE ---
+interface Article {
+	id: number;
+	title: string;
+	content: string;
+	createdAt: string; // Utilisé pour la date de publication
+	// Pas de champ category dans notre modèle actuel Sequelize
+}
 
-		if (!res.ok) throw new Error("Erreur récupération articles");
+// Fonction pour récupérer les articles depuis l'API Node.js/Sequelize
+async function getArticles(): Promise<Article[]> {
+	// Spécifiez le type de retour
+	try {
+		// 💡 CHANGEMENT 1 : Enlever le paramètre 'populate=*' car il est spécifique à Strapi.
+		const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles`, {
+			next: { revalidate: 3600 },
+		});
+
+		if (!res.ok) {
+			console.error("Erreur récupération articles:", res.status);
+			throw new Error("Erreur récupération articles");
+		}
 
 		const data = await res.json();
 
-		if (Array.isArray(data.data)) {
-			return data.data
-				.filter((item: any) => item.attributes) // 🚨 AJOUTEZ CETTE LIGNE : Filtrer les éléments sans 'attributes'
-				.map((item: any) => ({
-					id: item.id,
-					// S'assurer que 'category' est une chaîne, même vide, si absente
-					category: item.attributes.category || "",
-					...item.attributes,
-				}));
+		// 💡 CHANGEMENT 2 : L'API Node.js renvoie directement le tableau d'articles.
+		if (Array.isArray(data)) {
+			return data.map((item: any) => ({
+				id: item.id,
+				title: item.title,
+				content: item.content,
+				createdAt: item.createdAt, // Assurez-vous d'utiliser le champ de date correct
+			})) as Article[];
 		}
 
 		return [];
@@ -52,6 +62,8 @@ export default async function BlogPage() {
 			</section>
 		);
 	}
+
+	// Le reste du composant reste inchangé
 
 	return (
 		<>

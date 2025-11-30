@@ -1,24 +1,49 @@
+// src/app/portfolio/PortfolioClient.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+// Interface pour typer les projets reçus par votre API Node.js/Sequelize
+interface Project {
+	id: number;
+	title: string;
+	description: string;
+	url: string; // Lien vers le projet externe
+	image?: {
+		url: string; // URL complète de l'image (si hébergée sur la même API)
+	};
+	// Vous pouvez ajuster cette structure si votre modèle Sequelize est différent
+}
+
 const PortfolioPage = () => {
-	const [projects, setProjects] = useState([]);
+	const [projects, setProjects] = useState<Project[]>([]); // Utiliser l'interface
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
 		const fetchProjects = async () => {
 			try {
-				const response = await fetch(
-					"http://localhost:1337/api/projects?populate=*",
-				);
+				const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+				if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL non défini.");
+
+				// 💡 CORRECTION 1 & 2 : Utiliser la variable d'environnement et l'endpoint standard
+				const response = await fetch(`${apiUrl}/api/projects`);
+
 				if (!response.ok) {
 					throw new Error("La récupération des projets a échoué");
 				}
-				const data = await response.json();
-				setProjects(data.data);
+
+				const data: Project[] = await response.json();
+
+				// 💡 CORRECTION 3 : L'API Node.js/Sequelize renvoie directement le tableau (data)
+				if (Array.isArray(data)) {
+					setProjects(data);
+				} else {
+					// Gérer le cas où la réponse n'est pas un tableau (e.g., si c'est une pagination)
+					setProjects([]);
+					console.warn("L'API n'a pas renvoyé un tableau de projets.");
+				}
 			} catch (error) {
 				console.error("Erreur lors de la récupération des projets", error);
 			} finally {
@@ -39,7 +64,7 @@ const PortfolioPage = () => {
 	return (
 		<section className="py-16">
 			<div className="container mx-auto px-4">
-				<div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center bg-gray-100  py-10">
+				<div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center bg-gray-100 py-10">
 					<div className="md:w-1/2 text-center md:text-left">
 						<h1 className="text-center text-5xl md:text-4xl font-extrabold text-gray-800 leading-tight mb-4">
 							Notre Portfolio
@@ -53,9 +78,10 @@ const PortfolioPage = () => {
 
 				{projects.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-20">
-						{projects.map((project: any) => {
-							const imageUrl =
-								project.image?.data?.attributes?.url || project.image?.url;
+						{projects.map((project: Project) => {
+							// 💡 CORRECTION 4 : Simplification de l'accès à l'URL de l'image
+							// On suppose que l'API renvoie l'URL complète directement dans project.image.url
+							const imageUrl = project.image?.url;
 							const projectUrl = project.url;
 
 							if (!imageUrl) {
@@ -72,7 +98,8 @@ const PortfolioPage = () => {
 								>
 									<div className="relative w-full h-64">
 										<Image
-											src={`http://localhost:1337${imageUrl}`}
+											// 💡 CORRECTION 5 : Utilisation directe de l'URL (plus besoin de http://localhost:1337)
+											src={imageUrl}
 											alt={project.title}
 											fill
 											className="object-cover"

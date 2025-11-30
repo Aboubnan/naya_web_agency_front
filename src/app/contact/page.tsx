@@ -1,3 +1,4 @@
+// src/app/contact/page.tsx
 import { Metadata } from "next";
 import ContactClient from "./ContactClient";
 

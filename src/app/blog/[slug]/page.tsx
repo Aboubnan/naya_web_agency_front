@@ -1,61 +1,65 @@
-import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-// Importez Image, peu importe où est PageProps
-import Image from "next/image";
+// src/app/blog/[slug]/page.tsx
 
-// --- Définitions de types ---
+import { notFound } from "next/navigation";
+import { Metadata } from "next"; // Ajout de Metadata pour la génération dynamique
+// Importez les modules nécessaires ici (pas d'Image nécessaire si vous n'affichez pas la cover)
 
-// Interface complète pour la page
-interface ArticlePageProps {
-	params: {
-		slug: string;
-	};
-	searchParams?: { [key: string]: string | string[] | undefined };
-}
-
-interface StrapiImageAttributes {
-	url: string;
-	width: number;
-	height: number;
-}
-
-interface StrapiCoverImage {
-	data: {
-		attributes: StrapiImageAttributes;
-	} | null;
-}
+// --- Définitions de types pour Sequelize ---
 
 interface ArticleData {
+	id: number;
+	slug: string;
 	title: string;
-	publishedDate: string;
-	content: any;
-	coverImage: StrapiCoverImage | null;
+	createdAt: string; // 💡 UNIFORMISE : Utiliser 'createdAt' (champ standard de Sequelize)
+	content: string;
+	// Si votre API supporte une image de couverture, vous devrez ajouter 'coverImage: string;' ou similaire
 }
 
-// --- NOUVELLE FONCTION POUR LES SLUGS ---
+// ----------------------------------------------------
+// Fonction pour générer les métadonnées dynamiques
+export async function generateMetadata({
+	params,
+}: { params: { slug: string } }): Promise<Metadata> {
+	const article = await getArticle(params.slug);
+
+	if (!article) {
+		return {
+			title: "Article non trouvé",
+			description: "Cet article n'existe plus ou n'a jamais existé.",
+		};
+	}
+
+	return {
+		title: article.title,
+		description: article.content.substring(0, 150) + "...", // Utilisation d'un extrait du contenu
+	};
+}
+
+// REMARQUE : La fonction generateStaticParams DOIT renvoyer un tableau de SLUGs.
 export async function generateStaticParams() {
 	try {
-		const res = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?fields[0]=slug`,
-			{ next: { revalidate: 3600 } },
-		);
+		const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+		if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
+
+		const res = await fetch(`${apiUrl}/api/articles`, {
+			next: { revalidate: 3600 },
+		});
 
 		if (!res.ok) {
 			console.error("Erreur de récupération des slugs:", res.status);
 			return [];
 		}
 
-		const data = await res.json();
+		const data: ArticleData[] = await res.json();
 
-		if (!Array.isArray(data.data)) {
-			// Ajout d'une vérification au cas où data.data n'est pas un tableau
+		// 💡 CONFORME : L'API Node.js renvoie directement le tableau d'articles
+		if (!Array.isArray(data)) {
 			return [];
 		}
 
-		return data.data
-			.filter((item: any) => item.attributes?.slug) // 🚨 CORRECTION ICI : Filtrer les items sans slug ou attributes
-			.map((item: any) => ({
-				slug: item.attributes.slug,
-			}));
+		return data.map((item) => ({
+			slug: item.slug,
+		}));
 	} catch (error) {
 		console.error("Erreur dans generateStaticParams:", error);
 		return [];
@@ -63,44 +67,42 @@ export async function generateStaticParams() {
 }
 
 // ----------------------------
+// Fonction de récupération pour un seul article par SLUG
 async function getArticle(slug: string): Promise<ArticleData | null> {
 	try {
-		const res = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/api/articles?filters[slug][$eqi]=${slug}&populate=coverImage`,
-			{ next: { revalidate: 10 } },
-		);
+		const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+		if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
 
-		if (!res.ok) throw new Error("Impossible de récupérer l'article");
+		// 💡 CONFORME : Utilisation de l'endpoint par SLUG
+		const res = await fetch(`${apiUrl}/api/articles/slug/${slug}`, {
+			next: { revalidate: 10 },
+		});
+
+		if (!res.ok) return null;
 
 		const data = await res.json();
 
-		return data.data[0] ? (data.data[0].attributes as ArticleData) : null;
+		// 💡 CONFORME : La réponse est l'objet article direct
+		return data as ArticleData;
 	} catch (error) {
 		console.error("Erreur fetch article:", error);
 		return null;
 	}
 }
 
-// 🚨 CORRECTION DÉBLOQUANTE : Utiliser 'any' ou enlever le type pour contourner le conflit Vercel/Next.js
-export default async function ArticlePage({ params }: any) {
-	// On re-force le type ici pour que le code interne soit sécurisé par TypeScript
-	const { slug } = params as { slug: string };
+export default async function ArticlePage({
+	params,
+}: { params: { slug: string } }) {
+	const { slug } = params;
 
-	if (!slug) return <div>Slug manquant dans l'URL</div>;
+	if (!slug) notFound();
 
 	const article = await getArticle(slug);
 
-	if (!article) return <div>Article introuvable pour le slug : {slug}</div>;
+	if (!article) notFound();
 
-	const { title, publishedDate, content, coverImage } = article;
-
-	const imageAttrs = coverImage?.data?.attributes;
-
-	const imageUrl = imageAttrs?.url
-		? imageAttrs.url.startsWith("http")
-			? imageAttrs.url
-			: `${process.env.NEXT_PUBLIC_API_URL}${imageAttrs.url}`
-		: null;
+	// 💡 CORRIGÉ : Utilisation de 'createdAt' pour la date
+	const { title, createdAt, content } = article;
 
 	return (
 		<section className="py-16 bg-gray-100">
@@ -109,30 +111,17 @@ export default async function ArticlePage({ params }: any) {
 					{title}
 				</h1>
 
-				{publishedDate ? (
+				{createdAt && (
 					<p className="text-center mb-8 text-gray-600">
-						Publié le : {new Date(publishedDate).toLocaleDateString()}
-					</p>
-				) : (
-					<p className="text-center mb-8 text-gray-600">
-						Date de publication non disponible
+						Publié le : {new Date(createdAt).toLocaleDateString("fr-FR")}
 					</p>
 				)}
 
-				{imageUrl && imageAttrs && (
-					<div className="flex justify-center mb-8">
-						<Image
-							src={imageUrl}
-							alt={title}
-							width={imageAttrs.width || 800}
-							height={imageAttrs.height || 400}
-							className="object-cover rounded mb-8"
-						/>
+				<div className="bg-white p-8 rounded-lg shadow-xl">
+					<div className="prose max-w-none">
+						{/* 💡 CORRIGÉ : Utilisation du div wrapper avec dangerouslySetInnerHTML */}
+						<div dangerouslySetInnerHTML={{ __html: content }} />
 					</div>
-				)}
-
-				<div className="prose max-w-none">
-					<BlocksRenderer content={content} />
 				</div>
 			</div>
 		</section>
