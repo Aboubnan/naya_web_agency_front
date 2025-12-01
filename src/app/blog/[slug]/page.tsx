@@ -1,8 +1,17 @@
-// src/app/blog/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
-// --- Définition du type Article ---
+// --- DÉFINITION DES TYPES ---
+
+// Interface pour les props passées au composant de page et à generateMetadata
+interface ArticlePageProps {
+	params: {
+		slug: string;
+	};
+	// Note: searchParams est optionnel si non utilisé
+}
+
+// Interface pour les données d'un article reçues de l'API
 interface ArticleData {
 	id: number;
 	slug: string;
@@ -13,18 +22,24 @@ interface ArticleData {
 
 // ----------------------------------------------------
 // Fonction pour récupérer un article par slug
+// ----------------------------------------------------
 async function getArticle(slug: string): Promise<ArticleData | null> {
 	try {
 		const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 		if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
 
+		// Assurez-vous que le chemin de l'API est correct pour récupérer par slug
 		const res = await fetch(`${apiUrl}/api/articles/slug/${slug}`, {
 			next: { revalidate: 10 },
 		});
 
-		if (!res.ok) return null;
+		if (!res.ok) {
+			console.error(`Erreur API pour slug ${slug}: ${res.status}`);
+			return null;
+		}
 
 		const data = await res.json();
+		// L'API devrait retourner l'objet article directement
 		return data as ArticleData;
 	} catch (error) {
 		console.error("Erreur fetch article:", error);
@@ -33,32 +48,14 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 }
 
 // ----------------------------------------------------
-// Génération des métadonnées dynamiques
-export async function generateMetadata({
-	params,
-}: { params: { slug: string } }): Promise<Metadata> {
-	const article = await getArticle(params.slug);
-
-	if (!article) {
-		return {
-			title: "Article non trouvé",
-			description: "Cet article n'existe plus ou n'a jamais existé.",
-		};
-	}
-
-	return {
-		title: article.title,
-		description: article.content.substring(0, 150) + "...",
-	};
-}
-
-// ----------------------------------------------------
 // Génération des routes statiques pour le SSG
+// ----------------------------------------------------
 export async function generateStaticParams() {
 	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 	if (!apiUrl) return [];
 
 	try {
+		// Récupère la liste complète des slugs pour générer les pages
 		const res = await fetch(`${apiUrl}/api/articles`, {
 			next: { revalidate: 3600 },
 		});
@@ -76,10 +73,32 @@ export async function generateStaticParams() {
 }
 
 // ----------------------------------------------------
-// Composant de la page article
-export default async function ArticlePage({
+// Génération des métadonnées dynamiques
+// ----------------------------------------------------
+// Utilise l'interface ArticlePageProps pour résoudre l'erreur de typage
+export async function generateMetadata({
 	params,
-}: { params: { slug: string } }) {
+}: ArticlePageProps): Promise<Metadata> {
+	const article = await getArticle(params.slug);
+
+	if (!article) {
+		return {
+			title: "Article non trouvé",
+			description: "Cet article n'existe plus ou n'a jamais existé.",
+		};
+	}
+
+	return {
+		title: article.title,
+		description: article.content.substring(0, 150) + "...",
+	};
+}
+
+// ----------------------------------------------------
+// Composant de la page article
+// ----------------------------------------------------
+// Utilise l'interface ArticlePageProps pour résoudre l'erreur de typage
+export default async function ArticlePage({ params }: ArticlePageProps) {
 	const { slug } = params;
 
 	if (!slug) notFound();
