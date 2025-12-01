@@ -68,10 +68,8 @@ export async function generateStaticParams() {
 // ----------------------------------------------------
 // Génération des métadonnées dynamiques
 // ----------------------------------------------------
-// Typage direct pour contourner le conflit TypeScript/Next.js
-export async function generateMetadata({
-	params,
-}: { params: { slug: string } }): Promise<Metadata> {
+// Enlève le typage des props pour laisser TypeScript inférer le type PageProps
+export async function generateMetadata({ params }): Promise<Metadata> {
 	const article = await getArticle(params.slug);
 
 	if (!article) {
@@ -90,10 +88,8 @@ export async function generateMetadata({
 // ----------------------------------------------------
 // Composant de la page article
 // ----------------------------------------------------
-// Typage direct pour contourner le conflit TypeScript/Next.js
-export default async function ArticlePage({
-	params,
-}: { params: { slug: string } }) {
+// Enlève le typage des props pour laisser TypeScript inférer le type PageProps
+export default async function ArticlePage({ params }) {
 	const { slug } = params;
 
 	if (!slug) notFound();
