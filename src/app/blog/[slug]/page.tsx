@@ -3,14 +3,6 @@ import { Metadata } from "next";
 
 // --- DÉFINITION DES TYPES ---
 
-// Interface pour les props passées au composant de page et à generateMetadata
-interface ArticlePageProps {
-	params: {
-		slug: string;
-	};
-	// Note: searchParams est optionnel si non utilisé
-}
-
 // Interface pour les données d'un article reçues de l'API
 interface ArticleData {
 	id: number;
@@ -42,6 +34,7 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 		// L'API devrait retourner l'objet article directement
 		return data as ArticleData;
 	} catch (error) {
+		// En cas d'erreur de connexion (fetch failed, ECONNREFUSED)
 		console.error("Erreur fetch article:", error);
 		return null;
 	}
@@ -75,10 +68,10 @@ export async function generateStaticParams() {
 // ----------------------------------------------------
 // Génération des métadonnées dynamiques
 // ----------------------------------------------------
-// Utilise l'interface ArticlePageProps pour résoudre l'erreur de typage
+// Typage direct pour contourner le conflit TypeScript/Next.js
 export async function generateMetadata({
 	params,
-}: ArticlePageProps): Promise<Metadata> {
+}: { params: { slug: string } }): Promise<Metadata> {
 	const article = await getArticle(params.slug);
 
 	if (!article) {
@@ -97,8 +90,10 @@ export async function generateMetadata({
 // ----------------------------------------------------
 // Composant de la page article
 // ----------------------------------------------------
-// Utilise l'interface ArticlePageProps pour résoudre l'erreur de typage
-export default async function ArticlePage({ params }: ArticlePageProps) {
+// Typage direct pour contourner le conflit TypeScript/Next.js
+export default async function ArticlePage({
+	params,
+}: { params: { slug: string } }) {
 	const { slug } = params;
 
 	if (!slug) notFound();
