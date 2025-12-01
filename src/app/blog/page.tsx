@@ -1,55 +1,60 @@
-// app/blog/page.tsx
+// src/app/blog/page.tsx
 import BlogList from "@/components/BlogList";
 import { Metadata } from "next";
 
-export const metadata: Metadata = {
-	title: "Blog - Naya Web",
-	description:
-		"Découvrez nos articles et conseils sur le développement web et la transformation digitale.",
-};
-
-// --- NOUVELLE INTERFACE SIMPLIFIÉE ---
+// --- Définition du type Article ---
 interface Article {
 	id: number;
 	title: string;
 	content: string;
-	createdAt: string; // Utilisé pour la date de publication
-	// Pas de champ category dans notre modèle actuel Sequelize
+	createdAt: string;
+	slug: string;
 }
 
-// Fonction pour récupérer les articles depuis l'API Node.js/Sequelize
+// ----------------------------------------------------
+// Fonction pour récupérer tous les articles depuis l'API
 async function getArticles(): Promise<Article[]> {
-	// Spécifiez le type de retour
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+	if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
+
 	try {
-		// 💡 CHANGEMENT 1 : Enlever le paramètre 'populate=*' car il est spécifique à Strapi.
-		const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles`, {
+		const res = await fetch(`${apiUrl}/api/articles`, {
 			next: { revalidate: 3600 },
 		});
 
 		if (!res.ok) {
 			console.error("Erreur récupération articles:", res.status);
-			throw new Error("Erreur récupération articles");
+			return [];
 		}
 
 		const data = await res.json();
 
-		// 💡 CHANGEMENT 2 : L'API Node.js renvoie directement le tableau d'articles.
-		if (Array.isArray(data)) {
-			return data.map((item: any) => ({
-				id: item.id,
-				title: item.title,
-				content: item.content,
-				createdAt: item.createdAt, // Assurez-vous d'utiliser le champ de date correct
-			})) as Article[];
-		}
+		if (!Array.isArray(data)) return [];
 
-		return [];
+		// Uniformisation des champs
+		return data.map((item: any) => ({
+			id: item.id,
+			title: item.title,
+			content: item.content,
+			createdAt: item.createdAt,
+			slug: item.slug,
+		}));
 	} catch (error) {
 		console.error("Erreur fetch articles:", error);
 		return [];
 	}
 }
 
+// ----------------------------------------------------
+// Métadonnées de la page blog
+export const metadata: Metadata = {
+	title: "Blog - Naya Web",
+	description:
+		"Découvrez nos articles et conseils sur le développement web et la transformation digitale.",
+};
+
+// ----------------------------------------------------
+// Composant de la page blog
 export default async function BlogPage() {
 	const articles = await getArticles();
 
@@ -62,8 +67,6 @@ export default async function BlogPage() {
 			</section>
 		);
 	}
-
-	// Le reste du composant reste inchangé
 
 	return (
 		<>
