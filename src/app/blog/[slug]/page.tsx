@@ -1,9 +1,8 @@
 // src/app/blog/[slug]/page.tsx
-
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
-// --- Types pour Sequelize ---
+// --- Définition du type Article ---
 interface ArticleData {
 	id: number;
 	slug: string;
@@ -12,57 +11,8 @@ interface ArticleData {
 	content: string;
 }
 
-// ----------------------------
-// Fonction pour générer les métadonnées dynamiques
-export async function generateMetadata({
-	params,
-}: { params: { slug: string } }): Promise<Metadata> {
-	const article = await getArticle(params.slug);
-
-	if (!article) {
-		return {
-			title: "Article non trouvé",
-			description: "Cet article n'existe plus ou n'a jamais existé.",
-		};
-	}
-
-	return {
-		title: article.title,
-		description: article.content.substring(0, 150) + "...",
-	};
-}
-
-// ----------------------------
-// Récupération des slugs pour build statique
-export async function generateStaticParams() {
-	try {
-		const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-		if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
-
-		const res = await fetch(`${apiUrl}/api/articles`, {
-			next: { revalidate: 3600 },
-		});
-
-		if (!res.ok) {
-			console.error("Erreur de récupération des slugs:", res.status);
-			return [];
-		}
-
-		const data: ArticleData[] = await res.json();
-
-		if (!Array.isArray(data)) return [];
-
-		return data.map((item) => ({
-			slug: item.slug,
-		}));
-	} catch (error) {
-		console.error("Erreur dans generateStaticParams:", error);
-		return [];
-	}
-}
-
-// ----------------------------
-// Récupération d'un article par SLUG
+// ----------------------------------------------------
+// Fonction pour récupérer un article par slug
 async function getArticle(slug: string): Promise<ArticleData | null> {
 	try {
 		const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -82,8 +32,51 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 	}
 }
 
-// ----------------------------
-// Composant principal
+// ----------------------------------------------------
+// Génération des métadonnées dynamiques
+export async function generateMetadata({
+	params,
+}: { params: { slug: string } }): Promise<Metadata> {
+	const article = await getArticle(params.slug);
+
+	if (!article) {
+		return {
+			title: "Article non trouvé",
+			description: "Cet article n'existe plus ou n'a jamais existé.",
+		};
+	}
+
+	return {
+		title: article.title,
+		description: article.content.substring(0, 150) + "...",
+	};
+}
+
+// ----------------------------------------------------
+// Génération des routes statiques pour le SSG
+export async function generateStaticParams() {
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+	if (!apiUrl) return [];
+
+	try {
+		const res = await fetch(`${apiUrl}/api/articles`, {
+			next: { revalidate: 3600 },
+		});
+
+		if (!res.ok) return [];
+
+		const data: ArticleData[] = await res.json();
+		if (!Array.isArray(data)) return [];
+
+		return data.map((item) => ({ slug: item.slug }));
+	} catch (error) {
+		console.error("Erreur generateStaticParams:", error);
+		return [];
+	}
+}
+
+// ----------------------------------------------------
+// Composant de la page article
 export default async function ArticlePage({
 	params,
 }: { params: { slug: string } }) {
