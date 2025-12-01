@@ -1,6 +1,9 @@
-import { notFound } from "next/navigation";
-import { Metadata, PageProps } from "next";
+// src/app/blog/[slug]/page.tsx
 
+import { notFound } from "next/navigation";
+import { Metadata } from "next";
+
+// --- Types pour Sequelize ---
 interface ArticleData {
 	id: number;
 	slug: string;
@@ -9,9 +12,11 @@ interface ArticleData {
 	content: string;
 }
 
+// ----------------------------
+// Fonction pour générer les métadonnées dynamiques
 export async function generateMetadata({
 	params,
-}: PageProps<{ slug: string }>): Promise<Metadata> {
+}: { params: { slug: string } }): Promise<Metadata> {
 	const article = await getArticle(params.slug);
 
 	if (!article) {
@@ -27,45 +32,66 @@ export async function generateMetadata({
 	};
 }
 
+// ----------------------------
+// Récupération des slugs pour build statique
 export async function generateStaticParams() {
-	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-	if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
+	try {
+		const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+		if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
 
-	const res = await fetch(`${apiUrl}/api/articles`, {
-		next: { revalidate: 3600 },
-	});
+		const res = await fetch(`${apiUrl}/api/articles`, {
+			next: { revalidate: 3600 },
+		});
 
-	if (!res.ok) return [];
+		if (!res.ok) {
+			console.error("Erreur de récupération des slugs:", res.status);
+			return [];
+		}
 
-	const data: ArticleData[] = await res.json();
+		const data: ArticleData[] = await res.json();
 
-	return data.map((item) => ({
-		slug: item.slug,
-	}));
+		if (!Array.isArray(data)) return [];
+
+		return data.map((item) => ({
+			slug: item.slug,
+		}));
+	} catch (error) {
+		console.error("Erreur dans generateStaticParams:", error);
+		return [];
+	}
 }
 
+// ----------------------------
+// Récupération d'un article par SLUG
 async function getArticle(slug: string): Promise<ArticleData | null> {
-	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-	if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
+	try {
+		const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+		if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
 
-	const res = await fetch(`${apiUrl}/api/articles/slug/${slug}`, {
-		next: { revalidate: 10 },
-	});
+		const res = await fetch(`${apiUrl}/api/articles/slug/${slug}`, {
+			next: { revalidate: 10 },
+		});
 
-	if (!res.ok) return null;
+		if (!res.ok) return null;
 
-	return (await res.json()) as ArticleData;
+		const data = await res.json();
+		return data as ArticleData;
+	} catch (error) {
+		console.error("Erreur fetch article:", error);
+		return null;
+	}
 }
 
+// ----------------------------
+// Composant principal
 export default async function ArticlePage({
 	params,
-}: PageProps<{ slug: string }>) {
+}: { params: { slug: string } }) {
 	const { slug } = params;
 
 	if (!slug) notFound();
 
 	const article = await getArticle(slug);
-
 	if (!article) notFound();
 
 	const { title, createdAt, content } = article;
