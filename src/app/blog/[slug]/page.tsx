@@ -31,10 +31,8 @@ async function getArticle(slug: string): Promise<ArticleData | null> {
 		}
 
 		const data = await res.json();
-		// L'API devrait retourner l'objet article directement
 		return data as ArticleData;
 	} catch (error) {
-		// En cas d'erreur de connexion (fetch failed, ECONNREFUSED)
 		console.error("Erreur fetch article:", error);
 		return null;
 	}
@@ -48,7 +46,6 @@ export async function generateStaticParams() {
 	if (!apiUrl) return [];
 
 	try {
-		// Récupère la liste complète des slugs pour générer les pages
 		const res = await fetch(`${apiUrl}/api/articles`, {
 			next: { revalidate: 3600 },
 		});
@@ -68,8 +65,11 @@ export async function generateStaticParams() {
 // ----------------------------------------------------
 // Génération des métadonnées dynamiques
 // ----------------------------------------------------
-// Enlève le typage des props pour laisser TypeScript inférer le type PageProps
-export async function generateMetadata({ params }): Promise<Metadata> {
+// Typage correct pour satisfaire le compilateur TypeScript
+export async function generateMetadata({
+	params,
+}: { params: { slug: string } }): Promise<Metadata> {
+	// 🚨 Ligne corrigée
 	const article = await getArticle(params.slug);
 
 	if (!article) {
@@ -88,8 +88,11 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 // ----------------------------------------------------
 // Composant de la page article
 // ----------------------------------------------------
-// Enlève le typage des props pour laisser TypeScript inférer le type PageProps
-export default async function ArticlePage({ params }) {
+// Typage correct pour satisfaire le compilateur TypeScript
+export default async function ArticlePage({
+	params,
+}: { params: { slug: string } }) {
+	// 🚨 Ligne corrigée
 	const { slug } = params;
 
 	if (!slug) notFound();
