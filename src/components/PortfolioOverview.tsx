@@ -127,7 +127,7 @@ const PortfolioOverview = () => {
 									<div className="md:flex h-full">
 										<div className="relative w-full md:w-2/5 h-64 md:h-auto flex-shrink-0">
 											<Image
-												src={fullImageUrl}
+												src={imageUrl}
 												alt={project.imageAlt || project.title}
 												fill
 												sizes="(max-width: 768px) 100vw, 33vw"
@@ -179,7 +179,7 @@ const PortfolioOverview = () => {
 				{/* Bouton vers la page complète du portfolio */}
 				<div className="text-center mt-12">
 					<Link
-						href="/portfolio"
+						href="/portfoalio"
 						className="inline-flex items-center px-10 py-3 text-lg bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-xl hover:shadow-indigo-500/50"
 					>
 						Voir tout le Portfolio
