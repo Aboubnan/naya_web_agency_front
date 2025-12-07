@@ -78,33 +78,33 @@ const PortfolioPage = () => {
 				</div>
 
 				{projects.length > 0 ? (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-20">
-						{projects.map((project: Project) => {
-							// 💡 CORRECTION 4 : Simplification de l'accès à l'URL de l'image
-							// On suppose que l'API renvoie l'URL complète directement dans project.image.url
-							const imageUrl = project.imageUrl; // si tu as bien envoyé /uploads/ocoffee.png
-
-							const projectUrl = project.url;
-
-							if (!imageUrl) {
-								return null;
-							}
-
-							return (
-								<Link
-									key={project.id}
-									href={`/portfolio/${project.slug}`} // ← ici on utilise le slug
-									className="bg-white rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105 block h-full"
-								>
-									<div className="relative w-full h-64">
-										<Image
-											src={imageUrl}
-											alt={project.title}
-											fill
-											className="object-cover"
-											unoptimized
-										/>
-									</div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
+                           {projects.map((project) => {
+                               const fullImageUrl = project.imageUrl
+                                   ? (project.imageUrl.startsWith("http")
+                                       ? project.imageUrl
+                                       : `${API_BASE_URL}${project.imageUrl}`)
+                                   : null;
+                               if (!fullImageUrl) {
+                                   return null;  // Saute le projet si pas d'image
+                               }
+                               return (
+                                   <Link
+                                       key={project.id}
+                                       href={`/portfolio/${project.slug}`}
+                                       className="bg-gray-50 rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group block"
+                                   >
+                                       <div className="md:flex h-full">
+                                           <div className="relative w-full md:w-2/5 h-64 md:h-auto flex-shrink-0">
+                                               <Image
+                                                   src={fullImageUrl}
+                                                   alt={project.title}
+                                                   fill
+                                                   sizes="(max-width: 768px) 100vw, 33vw"
+                                                   className="object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-90"
+                                                   unoptimized
+                                               />
+                                           </div>
 									<div className="p-6">
 										<h3 className="text-2xl font-bold text-gray-800 mb-2">
 											{project.title}
