@@ -4,71 +4,75 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://37.59.98.118:3001";
+
 interface Project {
 	id: number;
 	title: string;
-	description?: string;
-	shortDescription?: string;
-	technologies?: string[];
-	imageUrl?: string;
+	shortDescription: string;
+	fullDescription: string;
+	technologies: string[];
+	imageUrl: string;
 	imageAlt?: string;
 	externalUrl?: string;
 }
 
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_URL || "http://37.59.98.118:3001";
-
-const ProjectDetailPage = () => {
+export default function ProjectDetailPage() {
 	const { slug } = useParams();
 	const [project, setProject] = useState<Project | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
+	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
+		if (!slug) return;
+
 		const fetchProject = async () => {
 			try {
-				const res = await fetch(`${API_BASE_URL}/api/v1/projects/${slug}`);
+				const res = await fetch(
+					`${API_URL}/api/v1/projects?filters[slug][$eq]=${slug}`,
+				);
 
-				if (!res.ok) throw new Error("Projet non trouvé");
+				if (!res.ok) throw new Error("Erreur API");
 
-				const data: Project = await res.json();
-				console.log("🔍 DATA API =", data);
+				const data = await res.json();
 
-				// 🔥 Correction : gestion de l'URL d’image
-				let fullImageUrl = data.imageUrl;
-				if (fullImageUrl) {
-					if (!fullImageUrl.startsWith("http")) {
-						fullImageUrl = `${API_BASE_URL}${fullImageUrl}`;
-					}
-				}
+				// Strapi renvoie un tableau
+				const p = data[0];
+				if (!p) throw new Error("Projet inexistant");
+
+				// Fix URL image
+				const fixedUrl = p.imageUrl?.startsWith("/")
+					? `${API_URL}${p.imageUrl}`
+					: p.imageUrl;
 
 				setProject({
-					...data,
-					imageUrl: fullImageUrl,
-					description: data.description ?? data.shortDescription,
+					id: p.id,
+					title: p.title,
+					shortDescription: p.shortDescription,
+					fullDescription: p.fullDescription,
+					technologies: p.technologies || [],
+					imageUrl: fixedUrl,
+					imageAlt: p.imageAlt,
+					externalUrl: p.externalUrl,
 				});
 			} catch (err) {
 				console.error(err);
 				setProject(null);
 			} finally {
-				setIsLoading(false);
+				setLoading(false);
 			}
 		};
 
 		fetchProject();
 	}, [slug]);
 
-	if (isLoading) {
-		return <p className="text-center py-20">Chargement du projet...</p>;
-	}
-
-	if (!project) {
+	if (loading) return <p className="text-center py-20">Chargement...</p>;
+	if (!project)
 		return (
 			<p className="text-center py-20 text-red-500">Projet introuvable.</p>
 		);
-	}
 
 	return (
-		<section className="container mx-auto px-4 py-16">
+		<section className="container mx-auto px-6 py-16">
 			<h1 className="text-4xl font-bold mb-6">{project.title}</h1>
 
 			{project.imageUrl && (
@@ -77,17 +81,19 @@ const ProjectDetailPage = () => {
 						src={project.imageUrl}
 						alt={project.imageAlt || project.title}
 						fill
-						className="object-cover rounded-lg"
+						className="object-cover rounded-xl"
 						unoptimized
 					/>
 				</div>
 			)}
 
-			<p className="mb-6">{project.description}</p>
+			<p className="text-lg mb-8 whitespace-pre-line">
+				{project.fullDescription}
+			</p>
 
-			{project.technologies?.length > 0 && (
-				<div className="mb-6">
-					<h3 className="font-bold mb-2">Technologies utilisées :</h3>
+			{project.technologies.length > 0 && (
+				<div className="mb-8">
+					<h3 className="font-semibold mb-2">Technologies :</h3>
 					<ul className="flex flex-wrap gap-2">
 						{project.technologies.map((tech) => (
 							<li key={tech} className="bg-gray-200 px-3 py-1 rounded">
@@ -100,16 +106,17 @@ const ProjectDetailPage = () => {
 
 			{project.externalUrl && (
 				<a
-					href={project.externalUrl}
+					href={
+						project.externalUrl.startsWith("http")
+							? project.externalUrl
+							: "https://" + project.externalUrl
+					}
 					target="_blank"
-					rel="noopener noreferrer"
-					className="inline-block bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 transition"
+					className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
 				>
-					Voir le projet en ligne
+					Voir le projet
 				</a>
 			)}
 		</section>
 	);
-};
-
-export default ProjectDetailPage;
+}
