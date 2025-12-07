@@ -21,34 +21,6 @@ interface Project {
 	technologies?: string[];
 }
 
-// Données de démonstration si l'API ne répond pas
-const mockProjects: Project[] = [
-	{
-		id: 101,
-		title: "Plateforme d'Analyse Financière",
-		slug: "analyse-financiere",
-		description:
-			"Développement d'un outil SaaS pour le suivi des marchés boursiers en temps réel.",
-		image: {
-			url: "/uploads/project-alpha.jpg",
-			alt: "Plateforme d'analyse financière",
-		},
-		technologies: ["React", "D3.js", "Python"],
-	},
-	{
-		id: 102,
-		title: "Réseau Social pour Animaux",
-		slug: "reseau-social-animaux",
-		description:
-			"Création d'une communauté en ligne pour les propriétaires d'animaux de compagnie.",
-		image: {
-			url: "/uploads/project-beta.jpg",
-			alt: "Réseau social pour animaux",
-		},
-		technologies: ["Vue.js", "Firebase", "Tailwind CSS"],
-	},
-];
-
 const PortfolioOverview = () => {
 	const [projects, setProjects] = useState<Project[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -113,10 +85,12 @@ const PortfolioOverview = () => {
 						{projects.map((project) => {
 							const fullImageUrl = project.imageUrl
 								? project.imageUrl.startsWith("http")
-									? project.imageUrl // URL absolue
-									: `${API_BASE_URL}${project.imageUrl}` // URL relative, préfixe avec l'API
-								: `https://placehold.co/600x400/94a3b8/000000?text=${project.title.replace(/\s/g, "+")}`;
-
+									? project.imageUrl
+									: `${API_BASE_URL}${project.imageUrl}`
+								: null;
+							if (!fullImageUrl) {
+								return null; // Saute le projet si pas d'image
+							}
 							return (
 								<Link
 									key={project.id}
@@ -127,7 +101,7 @@ const PortfolioOverview = () => {
 										<div className="relative w-full md:w-2/5 h-64 md:h-auto flex-shrink-0">
 											<Image
 												src={fullImageUrl}
-												alt={project.image?.alt || project.title}
+												alt={project.title}
 												fill
 												sizes="(max-width: 768px) 100vw, 33vw"
 												className="object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-90"
