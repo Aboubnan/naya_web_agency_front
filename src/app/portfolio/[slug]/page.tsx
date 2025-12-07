@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://37.59.98.118:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface Project {
 	id: number;
 	title: string;
-	shortDescription?: string;
+	shortDescription: string;
 	fullDescription: string;
 	technologies: string[];
 	imageUrl: string;
@@ -27,20 +27,18 @@ export default function ProjectDetailPage() {
 
 		const fetchProject = async () => {
 			try {
-				const res = await fetch(`${API_URL}/api/v1/projects?slug=${slug}`);
-				if (!res.ok) throw new Error(`Erreur API : ${res.status}`);
+				const res = await fetch(
+					`${API_URL}/api/v1/projects?slug=${slug.toLowerCase()}`,
+				);
+				if (!res.ok) throw new Error("Projet non trouvé");
 
-				const data: Project[] = await res.json();
+				const data = await res.json();
+				const p = data[0]; // le premier projet du tableau
 
-				if (!data || data.length === 0) {
-					setProject(null);
-					return;
-				}
+				if (!p) throw new Error("Projet inexistant");
 
-				const p = data[0];
-
-				// Fix URL image si c'est un chemin relatif
-				const fixedImageUrl = p.imageUrl?.startsWith("/")
+				// Fix image URL si relative
+				const fixedUrl = p.imageUrl?.startsWith("/")
 					? `${API_URL}${p.imageUrl}`
 					: p.imageUrl;
 
@@ -50,12 +48,12 @@ export default function ProjectDetailPage() {
 					shortDescription: p.shortDescription,
 					fullDescription: p.fullDescription,
 					technologies: p.technologies || [],
-					imageUrl: fixedImageUrl,
+					imageUrl: fixedUrl,
 					imageAlt: p.imageAlt,
 					externalUrl: p.externalUrl,
 				});
 			} catch (err) {
-				console.error("Erreur fetch project:", err);
+				console.error(err);
 				setProject(null);
 			} finally {
 				setLoading(false);
@@ -65,9 +63,7 @@ export default function ProjectDetailPage() {
 		fetchProject();
 	}, [slug]);
 
-	if (loading)
-		return <p className="text-center py-20">Chargement du projet...</p>;
-
+	if (loading) return <p className="text-center py-20">Chargement...</p>;
 	if (!project)
 		return (
 			<p className="text-center py-20 text-red-500">Projet introuvable.</p>
@@ -114,8 +110,7 @@ export default function ProjectDetailPage() {
 							: "https://" + project.externalUrl
 					}
 					target="_blank"
-					rel="noopener noreferrer"
-					className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
+					className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
 				>
 					Voir le projet
 				</a>
