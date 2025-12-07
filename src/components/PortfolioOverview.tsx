@@ -1,3 +1,4 @@
+// src/app/components/PortfolioOverview.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowRight } from "lucide-react";
 
-// Les constantes d'API doivent être définies en dehors du composant
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const API_ENDPOINT = `${API_BASE_URL}/api/v1/projects?pagination[limit]=2`;
 
@@ -20,7 +20,7 @@ interface Project {
 	technologies?: string[];
 }
 
-// Données de démonstration
+// Données de démonstration si l’API ne répond pas
 const mockProjects: Project[] = [
 	{
 		id: 101,
@@ -60,7 +60,6 @@ const PortfolioOverview = () => {
 				}
 
 				const json = await response.json();
-				// Tentative de récupérer les données dans différents formats de réponse
 				const projectArray = json.projects || json.data || json;
 
 				if (Array.isArray(projectArray)) {
@@ -111,7 +110,6 @@ const PortfolioOverview = () => {
 				{projects.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
 						{projects.map((project) => {
-							// 1. Construction de l'URL complète
 							const fullImageUrl = project.imageUrl
 								? project.imageUrl.startsWith("http")
 									? project.imageUrl
@@ -130,7 +128,7 @@ const PortfolioOverview = () => {
 									<div className="md:flex h-full">
 										<div className="relative w-full md:w-2/5 h-64 md:h-auto flex-shrink-0">
 											<Image
-												src={fullImageUrl}
+												src={fullImageUrl} // ✅ utilisation de fullImageUrl
 												alt={project.imageAlt || project.title}
 												fill
 												sizes="(max-width: 768px) 100vw, 33vw"
@@ -182,7 +180,7 @@ const PortfolioOverview = () => {
 				{/* Bouton vers la page complète du portfolio */}
 				<div className="text-center mt-12">
 					<Link
-						href="/portfolio" // 🛑 CORRECTION de la FAUTE DE FRAPPE ICI : "/portfoalio" -> "/portfolio"
+						href="/portfolio" // ✅ correction du lien
 						className="inline-flex items-center px-10 py-3 text-lg bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-xl hover:shadow-indigo-500/50"
 					>
 						Voir tout le Portfolio
