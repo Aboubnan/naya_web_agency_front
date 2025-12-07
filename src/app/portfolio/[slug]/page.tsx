@@ -7,12 +7,16 @@ import Image from "next/image";
 interface Project {
 	id: number;
 	title: string;
-	fullDescription: string;
-	technologies: string[];
-	imageUrl: string;
+	description?: string;
+	shortDescription?: string;
+	technologies?: string[];
+	imageUrl?: string;
 	imageAlt?: string;
 	externalUrl?: string;
 }
+
+const API_BASE_URL =
+	process.env.NEXT_PUBLIC_API_URL || "http://37.59.98.118:3001";
 
 const ProjectDetailPage = () => {
 	const { slug } = useParams();
@@ -22,16 +26,28 @@ const ProjectDetailPage = () => {
 	useEffect(() => {
 		const fetchProject = async () => {
 			try {
-				const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-				if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL non défini.");
+				const res = await fetch(`${API_BASE_URL}/api/v1/projects/${slug}`);
 
-				const res = await fetch(`${apiUrl}/api/v1/projects/${slug}`);
 				if (!res.ok) throw new Error("Projet non trouvé");
 
 				const data: Project = await res.json();
-				setProject(data);
+
+				// 🔥 Correction : gestion de l'URL d’image
+				let fullImageUrl = data.imageUrl;
+				if (fullImageUrl) {
+					if (!fullImageUrl.startsWith("http")) {
+						fullImageUrl = `${API_BASE_URL}${fullImageUrl}`;
+					}
+				}
+
+				setProject({
+					...data,
+					imageUrl: fullImageUrl,
+					description: data.description ?? data.shortDescription,
+				});
 			} catch (err) {
 				console.error(err);
+				setProject(null);
 			} finally {
 				setIsLoading(false);
 			}
@@ -54,17 +70,19 @@ const ProjectDetailPage = () => {
 		<section className="container mx-auto px-4 py-16">
 			<h1 className="text-4xl font-bold mb-6">{project.title}</h1>
 
-			<div className="relative w-full h-96 mb-6">
-				<Image
-					src={project.imageUrl}
-					alt={project.imageAlt || project.title}
-					fill
-					className="object-cover rounded-lg"
-					unoptimized
-				/>
-			</div>
+			{project.imageUrl && (
+				<div className="relative w-full h-96 mb-6">
+					<Image
+						src={project.imageUrl}
+						alt={project.imageAlt || project.title}
+						fill
+						className="object-cover rounded-lg"
+						unoptimized
+					/>
+				</div>
+			)}
 
-			<p className="mb-6">{project.fullDescription}</p>
+			<p className="mb-6">{project.description}</p>
 
 			{project.technologies?.length > 0 && (
 				<div className="mb-6">
