@@ -100,6 +100,7 @@ const PortfolioPage = () => {
 											alt={project.title}
 											fill
 											className="object-cover"
+											unoptimized
 										/>
 									</div>
 									<div className="p-6">

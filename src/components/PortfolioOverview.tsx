@@ -138,6 +138,7 @@ const PortfolioOverview = () => {
 												fill
 												sizes="(max-width: 768px) 100vw, 33vw"
 												className="object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-90"
+												unoptimized
 											/>
 										</div>
 										<div className="p-6 md:p-8 flex flex-col justify-between w-full">

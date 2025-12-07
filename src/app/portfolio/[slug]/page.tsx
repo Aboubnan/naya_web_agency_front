@@ -60,6 +60,7 @@ const ProjectDetailPage = () => {
 					alt={project.imageAlt || project.title}
 					fill
 					className="object-cover rounded-lg"
+					unoptimized
 				/>
 			</div>
 
