@@ -9,7 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://37.59.98.118:3001";
 interface Project {
 	id: number;
 	title: string;
-	shortDescription: string;
+	shortDescription?: string;
 	fullDescription: string;
 	technologies: string[];
 	imageUrl: string;
@@ -27,20 +27,20 @@ export default function ProjectDetailPage() {
 
 		const fetchProject = async () => {
 			try {
-				const res = await fetch(
-					`${API_URL}/api/v1/projects?filters[slug][$eq]=${slug}`,
-				);
+				const res = await fetch(`${API_URL}/api/v1/projects?slug=${slug}`);
+				if (!res.ok) throw new Error(`Erreur API : ${res.status}`);
 
-				if (!res.ok) throw new Error("Erreur API");
+				const data: Project[] = await res.json();
 
-				const data = await res.json();
+				if (!data || data.length === 0) {
+					setProject(null);
+					return;
+				}
 
-				// Strapi renvoie un tableau
 				const p = data[0];
-				if (!p) throw new Error("Projet inexistant");
 
-				// Fix URL image
-				const fixedUrl = p.imageUrl?.startsWith("/")
+				// Fix URL image si c'est un chemin relatif
+				const fixedImageUrl = p.imageUrl?.startsWith("/")
 					? `${API_URL}${p.imageUrl}`
 					: p.imageUrl;
 
@@ -50,12 +50,12 @@ export default function ProjectDetailPage() {
 					shortDescription: p.shortDescription,
 					fullDescription: p.fullDescription,
 					technologies: p.technologies || [],
-					imageUrl: fixedUrl,
+					imageUrl: fixedImageUrl,
 					imageAlt: p.imageAlt,
 					externalUrl: p.externalUrl,
 				});
 			} catch (err) {
-				console.error(err);
+				console.error("Erreur fetch project:", err);
 				setProject(null);
 			} finally {
 				setLoading(false);
@@ -65,7 +65,9 @@ export default function ProjectDetailPage() {
 		fetchProject();
 	}, [slug]);
 
-	if (loading) return <p className="text-center py-20">Chargement...</p>;
+	if (loading)
+		return <p className="text-center py-20">Chargement du projet...</p>;
+
 	if (!project)
 		return (
 			<p className="text-center py-20 text-red-500">Projet introuvable.</p>
@@ -112,7 +114,8 @@ export default function ProjectDetailPage() {
 							: "https://" + project.externalUrl
 					}
 					target="_blank"
-					className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
+					rel="noopener noreferrer"
+					className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
 				>
 					Voir le projet
 				</a>
