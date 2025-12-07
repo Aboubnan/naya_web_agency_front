@@ -1,163 +1,136 @@
 // src/app/portfolio/[slug]/page.tsx
-"use client";
+// AUCUN "use client" ici. Ce composant est un Server Component.
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
-// 💡 L'API_BASE_URL doit être réutilisée pour construire l'URL de l'image
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_URL || "http://37.59.98.118:3001";
 
-interface Project {
-	id: number;
+// Interface alignée sur votre JSON
+interface ProjectDetail {
 	title: string;
 	fullDescription: string;
-	technologies: string[];
-	imageUrl: string;
+	externalUrl: string;
+	imageUrl?: string;
 	imageAlt?: string;
-	externalUrl?: string;
+	technologies: string[];
 }
 
-const ProjectDetailPage = () => {
-	// useParams est utilisé pour récupérer la partie dynamique de l'URL
-	const params = useParams();
-	const slug = params?.slug as string | undefined;
+/**
+ * Fonction asynchrone pour récupérer les données du projet
+ * (Exécutée côté serveur)
+ */
+async function getProjectBySlug(slug: string): Promise<ProjectDetail | null> {
+	try {
+		const response = await fetch(`${API_BASE_URL}/api/v1/projects/${slug}`, {
+			// Revalidation pour s'assurer que les données ne sont pas trop anciennes
+			next: { revalidate: 60 },
+		});
 
-	const [project, setProject] = useState<Project | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	const fetchProject = useCallback(async () => {
-		if (!slug) return;
-
-		try {
-			const apiUrl = API_BASE_URL;
-			if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL non défini.");
-
-			// 💡 L'appel API utilise le slug
-			const res = await fetch(`${apiUrl}/api/v1/projects/${slug}`);
-
-			if (!res.ok) {
-				// Si l'API renvoie 404, on gère l'erreur
-				throw new Error("Projet non trouvé sur l'API");
-			}
-
-			const json = await res.json();
-
-			// 🛑 CORRECTION 2 : On suppose que l'API renvoie l'objet directement
-			// Si l'API renvoie { project: {...} }, utilisez setProject(json.project);
-			setProject(json);
-		} catch (err) {
-			console.error(err);
-			setError("Impossible de charger les détails du projet.");
-		} finally {
-			setIsLoading(false);
+		if (!response.ok) {
+			console.error(
+				`API Error for slug ${slug}: ${response.status} ${response.statusText}`,
+			);
+			return null;
 		}
-	}, [slug]);
 
-	useEffect(() => {
-		fetchProject();
-	}, [fetchProject]);
+		// Le JSON est directement l'objet ProjectDetail (comme vous l'avez montré)
+		const json = await response.json();
+		return json as ProjectDetail;
+	} catch (error) {
+		console.error("Erreur de récupération du projet par slug:", error);
+		return null;
+	}
+}
 
-	// --- Rendu des états ---
-	if (isLoading) {
-		return (
-			<section className="py-20 text-center flex items-center justify-center">
-				<Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-			</section>
-		);
+/**
+ * Le Server Component principal
+ * Il reçoit le slug via les params de Next.js, sans hook.
+ */
+export default async function ProjectDetailPage({
+	params,
+}: { params: { slug: string } }) {
+	const project = await getProjectBySlug(params.slug);
+
+	if (!project) {
+		// Renvoie la page 404 native si le projet n'est pas trouvé
+		notFound();
 	}
 
-	if (error || !project) {
-		return (
-			<section className="py-20 text-center">
-				<p className="text-xl text-red-500 mb-4">
-					{error || "Projet introuvable."}
-				</p>
-				<Link href="/portfolio" className="text-indigo-600 hover:underline">
-					Retour au Portfolio
-				</Link>
-			</section>
-		);
-	}
-
-	// 🛑 CORRECTION 1 : Construction de l'URL d'image complète (si elle est relative)
+	// Logique pour construire l'URL de l'image (si relative)
 	const rawImageUrl = project.imageUrl;
 	let fullImageUrl = rawImageUrl;
 
 	if (rawImageUrl && !rawImageUrl.startsWith("http")) {
-		// Ajout de l'URL de base s'il s'agit d'un chemin relatif (/uploads/...)
 		fullImageUrl = `${API_BASE_URL}${rawImageUrl}`;
 	}
 
+	const imageAltText = project.imageAlt || project.title;
+
 	return (
-		<section className="container mx-auto px-4 py-16 max-w-5xl">
-			<Link
-				href="/portfolio"
-				className="inline-flex items-center text-indigo-600 hover:text-indigo-800 mb-6 font-medium"
-			>
-				<ArrowLeft className="w-5 h-5 mr-2" />
-				Retour au Portfolio
-			</Link>
-
-			<h1 className="text-4xl font-extrabold text-gray-900 mb-6 border-b pb-4">
-				{project.title}
-			</h1>
-
-			<div className="relative w-full h-96 mb-6 rounded-lg overflow-hidden shadow-xl">
-				<Image
-					// 💡 Utilisation de l'URL complète
-					src={fullImageUrl}
-					alt={project.imageAlt || project.title}
-					fill
-					sizes="(max-width: 768px) 100vw, 800px"
-					className="object-cover rounded-lg"
-					unoptimized
-				/>
-			</div>
-
-			<h2 className="text-2xl font-bold text-gray-800 mb-3">
-				Description du Projet
-			</h2>
-			<p className="text-gray-700 whitespace-pre-line mb-6">
-				{project.fullDescription}
-			</p>
-
-			{/* ... (Reste du composant technologies, externalUrl, etc.) ... */}
-
-			{project.technologies?.length > 0 && (
-				<div className="mb-6">
-					<h3 className="font-bold mb-3 text-xl text-gray-800">
-						Technologies utilisées :
-					</h3>
-					<ul className="flex flex-wrap gap-2">
-						{project.technologies.map((tech) => (
-							<li
-								key={tech}
-								className="bg-indigo-100 text-indigo-800 px-3 py-1 text-sm rounded-full font-medium"
-							>
-								{tech}
-							</li>
-						))}
-					</ul>
-				</div>
-			)}
-
-			{project.externalUrl && (
-				<a
-					href={project.externalUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-semibold mt-4 shadow-md"
+		<article className="py-12 md:py-20 bg-gray-50">
+			<div className="container mx-auto px-4 max-w-5xl">
+				<Link
+					href="/portfolio"
+					className="inline-flex items-center text-indigo-600 hover:text-indigo-800 mb-6 font-medium"
 				>
-					Voir le projet en ligne
-				</a>
-			)}
-		</section>
-	);
-};
+					<ArrowLeft className="w-5 h-5 mr-2" />
+					Retour au Portfolio
+				</Link>
 
-export default ProjectDetailPage;
+				<h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 border-b pb-4">
+					{project.title}
+				</h1>
+
+				<div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden shadow-xl">
+					<Image
+						src={fullImageUrl}
+						alt={imageAltText}
+						fill
+						sizes="100vw"
+						className="object-cover"
+						unoptimized
+					/>
+				</div>
+
+				<h2 className="text-2xl font-bold text-gray-800 mb-3">
+					Description Complète
+				</h2>
+				<div className="text-lg text-gray-700 space-y-4 whitespace-pre-line mb-8">
+					{project.fullDescription}
+				</div>
+
+				<h2 className="text-2xl font-bold text-gray-800 mb-3">
+					Technologies Utilisées
+				</h2>
+				<div className="flex flex-wrap gap-3 mb-8">
+					{project.technologies.map((tech, index) => (
+						<span
+							key={index}
+							className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-full shadow-md"
+						>
+							{tech}
+						</span>
+					))}
+				</div>
+
+				<div className="mt-8 text-center">
+					<a
+						href={project.externalUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center px-8 py-3 text-lg bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition-all duration-300 shadow-xl"
+					>
+						Visiter le site
+					</a>
+				</div>
+			</div>
+		</article>
+	);
+}
+
+// Composant d'erreur 404 personnalisé si besoin
+// export function generateNotFoundMetadata() { return { title: 'Projet Introuvable' } }
