@@ -31,6 +31,7 @@ const ProjectDetailPage = () => {
 				if (!res.ok) throw new Error("Projet non trouvé");
 
 				const data: Project = await res.json();
+				console.log("🔍 DATA API =", data);
 
 				// 🔥 Correction : gestion de l'URL d’image
 				let fullImageUrl = data.imageUrl;
