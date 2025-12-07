@@ -6,17 +6,16 @@ import Image from "next/image";
 import { Loader2, ArrowRight } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-const API_ENDPOINT = `${API_BASE_URL}/api/v1/projects?pagination[limit]=2`; // Limite à 2 projets
+const API_ENDPOINT = `${API_BASE_URL}/api/v1/projects?pagination[limit]=2`;
 
 interface Project {
 	id: number;
 	title: string;
-	description: string;
 	slug: string;
-	image: {
-		url: string;
-		alt: string;
-	};
+	shortDescription?: string;
+	description?: string;
+	imageUrl?: string; // URL relative depuis le back
+	imageAlt?: string;
 	technologies?: string[];
 }
 
@@ -25,25 +24,21 @@ const mockProjects: Project[] = [
 	{
 		id: 101,
 		title: "Plateforme d'Analyse Financière",
+		slug: "analyse-financiere",
 		description:
 			"Développement d'un outil SaaS pour le suivi des marchés boursiers en temps réel.",
-		slug: "analyse-financiere",
-		image: {
-			url: "https://placehold.co/600x400/10b981/ffffff?text=Financial+App",
-			alt: "Plateforme d'analyse financière",
-		},
+		imageUrl: "https://placehold.co/600x400/10b981/ffffff?text=Financial+App",
+		imageAlt: "Plateforme d'analyse financière",
 		technologies: ["React", "D3.js", "Python"],
 	},
 	{
 		id: 102,
 		title: "Réseau Social pour Animaux",
+		slug: "reseau-social-animaux",
 		description:
 			"Création d'une communauté en ligne pour les propriétaires d'animaux de compagnie.",
-		slug: "reseau-social-animaux",
-		image: {
-			url: "https://placehold.co/600x400/ef4444/ffffff?text=Pet+Social",
-			alt: "Réseau social pour animaux",
-		},
+		imageUrl: "https://placehold.co/600x400/ef4444/ffffff?text=Pet+Social",
+		imageAlt: "Réseau social pour animaux",
 		technologies: ["Vue.js", "Firebase", "Tailwind CSS"],
 	},
 ];
@@ -57,19 +52,16 @@ const PortfolioOverview = () => {
 		const fetchProjects = async () => {
 			try {
 				const response = await fetch(API_ENDPOINT);
-
 				if (!response.ok) {
 					throw new Error(
-						`La récupération des projets a échoué. Statut: ${response.status}.`,
+						`La récupération des projets a échoué. Statut: ${response.status}`,
 					);
 				}
 
 				const json = await response.json();
-				setProjects(json.projects || []); // ← ici on pointe vers le bon champ
+				const projectArray = json.projects || json.data || json;
 
-				const projectArray = Array.isArray(data) ? data : data.data || data;
-
-				if (projectArray && Array.isArray(projectArray)) {
+				if (Array.isArray(projectArray)) {
 					setProjects(projectArray);
 					setError(null);
 				} else {
@@ -85,6 +77,7 @@ const PortfolioOverview = () => {
 				setIsLoading(false);
 			}
 		};
+
 		fetchProjects();
 	}, []);
 
@@ -116,11 +109,10 @@ const PortfolioOverview = () => {
 				{projects.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
 						{projects.map((project) => {
-							const imageUrl = project.image?.url;
-							const fullImageUrl = imageUrl
-								? imageUrl.startsWith("http")
-									? imageUrl
-									: `${API_BASE_URL}${imageUrl}`
+							const fullImageUrl = project.imageUrl
+								? project.imageUrl.startsWith("http")
+									? project.imageUrl
+									: `${API_BASE_URL}${project.imageUrl}`
 								: `https://placehold.co/600x400/94a3b8/000000?text=${project.title.replace(
 										/\s/g,
 										"+",
@@ -129,14 +121,14 @@ const PortfolioOverview = () => {
 							return (
 								<Link
 									key={project.id}
-									href={`/portfolio/${project.slug}`} // ← Page détail via slug
+									href={`/portfolio/${project.slug}`}
 									className="bg-gray-50 rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group block"
 								>
 									<div className="md:flex h-full">
 										<div className="relative w-full md:w-2/5 h-64 md:h-auto flex-shrink-0">
 											<Image
 												src={fullImageUrl}
-												alt={project.image?.alt || project.title}
+												alt={project.imageAlt || project.title}
 												fill
 												sizes="(max-width: 768px) 100vw, 33vw"
 												className="object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-90"
@@ -149,7 +141,7 @@ const PortfolioOverview = () => {
 													{project.title}
 												</h3>
 												<p className="text-gray-700 mb-4 line-clamp-3">
-													{project.description}
+													{project.description || project.shortDescription}
 												</p>
 												{project.technologies &&
 													project.technologies.length > 0 && (
