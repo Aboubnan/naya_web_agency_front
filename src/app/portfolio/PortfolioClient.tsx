@@ -34,7 +34,8 @@ const PortfolioPage = () => {
 					throw new Error("La récupération des projets a échoué");
 				}
 
-				const data: Project[] = await response.json();
+				const json = await response.json();
+				setProjects(json.projects || []);
 
 				// 💡 CORRECTION 3 : L'API Node.js/Sequelize renvoie directement le tableau (data)
 				if (Array.isArray(data)) {
@@ -81,7 +82,8 @@ const PortfolioPage = () => {
 						{projects.map((project: Project) => {
 							// 💡 CORRECTION 4 : Simplification de l'accès à l'URL de l'image
 							// On suppose que l'API renvoie l'URL complète directement dans project.image.url
-							const imageUrl = project.imageUrl;
+							const imageUrl = project.imageUrl; // si tu as bien envoyé /uploads/ocoffee.png
+
 							const projectUrl = project.url;
 
 							if (!imageUrl) {
