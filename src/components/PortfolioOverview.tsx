@@ -1,3 +1,4 @@
+// src/app/portfolio/PortfolioClient.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -141,7 +142,8 @@ const PortfolioOverview = () => {
 							return (
 								<Link
 									key={project.id}
-									href={`/portfolio/${project.slug}`}
+									// 🚀 CORRECTION DE LA CASSE : Forcer le slug en minuscules pour la cohérence
+									href={`/portfolio/${project.slug.toLowerCase()}`}
 									className="bg-gray-50 rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group block"
 								>
 									<div className="md:flex h-full">
