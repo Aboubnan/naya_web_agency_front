@@ -75,32 +75,6 @@ const AboutUsPage = () => {
 					</div>
 
 					<hr className="border-gray-300" />
-
-					<div className="text-center">
-						<h2 className="text-3xl font-bold text-gray-800 mb-4">
-							Notre équipe
-						</h2>
-						<p className="text-lg text-gray-600 mb-8">
-							Faisons connaissance avec les visages derrière Naya Web.
-						</p>
-						<div className="flex justify-center">
-							<div className="w-40 h-40 rounded-full overflow-hidden shadow-lg">
-								<Image
-									src="/ta-photo.jpg" // Remplace par ta photo
-									alt="Membre de l'équipe"
-									width={160}
-									height={160}
-									className="object-cover w-full h-full"
-								/>
-							</div>
-						</div>
-						<h3 className="text-2xl font-bold text-gray-800 mt-4">
-							A. Boubnan
-						</h3>
-						<p className="text-lg text-gray-600">
-							Fondateur et Développeur Web
-						</p>
-					</div>
 				</div>
 			</div>
 		</section>

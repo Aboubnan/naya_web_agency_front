@@ -28,7 +28,7 @@ const PortfolioPage = () => {
 				if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL non défini.");
 
 				// 💡 CORRECTION 1 & 2 : Utiliser la variable d'environnement et l'endpoint standard
-				const response = await fetch(`${apiUrl}/api/projects`);
+				const response = await fetch(`${apiUrl}/api/v1/projects`);
 
 				if (!response.ok) {
 					throw new Error("La récupération des projets a échoué");
@@ -81,7 +81,7 @@ const PortfolioPage = () => {
 						{projects.map((project: Project) => {
 							// 💡 CORRECTION 4 : Simplification de l'accès à l'URL de l'image
 							// On suppose que l'API renvoie l'URL complète directement dans project.image.url
-							const imageUrl = project.image?.url;
+							const imageUrl = project.imageUrl;
 							const projectUrl = project.url;
 
 							if (!imageUrl) {
@@ -91,14 +91,11 @@ const PortfolioPage = () => {
 							return (
 								<Link
 									key={project.id}
-									href={projectUrl || "#"}
-									target="_blank"
-									rel="noopener noreferrer"
+									href={`/portfolio/${project.slug}`} // ← ici on utilise le slug
 									className="bg-white rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105 block h-full"
 								>
 									<div className="relative w-full h-64">
 										<Image
-											// 💡 CORRECTION 5 : Utilisation directe de l'URL (plus besoin de http://localhost:1337)
 											src={imageUrl}
 											alt={project.title}
 											fill
@@ -109,7 +106,7 @@ const PortfolioPage = () => {
 										<h3 className="text-2xl font-bold text-gray-800 mb-2">
 											{project.title}
 										</h3>
-										<p className="text-gray-600">{project.description}</p>
+										<p className="text-gray-600">{project.shortDescription}</p>
 									</div>
 								</Link>
 							);

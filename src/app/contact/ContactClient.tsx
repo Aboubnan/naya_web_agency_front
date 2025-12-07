@@ -1,4 +1,3 @@
-// src/app/contact/ContactClient.tsx
 "use client";
 import { useState } from "react";
 
@@ -25,40 +24,33 @@ const ContactPage = () => {
 		setStatus("Envoi en cours...");
 
 		try {
-			// Utilisation de la variable d'environnement
 			const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-			if (!apiUrl) {
-				throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
-			}
+			if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL n'est pas définie.");
 
-			const response = await fetch(
-				// 💡 CHANGEMENT 1 : Utilisation d'un endpoint générique pour le contact
-				`${apiUrl}/api/contact`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					// 💡 CHANGEMENT 2 : Envoi direct du formData (sans le wrapper 'data')
-					body: JSON.stringify(formData),
-				},
-			);
+			const response = await fetch(`${apiUrl}/api/v1/contact`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(formData),
+			});
 
 			if (!response.ok) {
-				// ... (Le bloc de gestion des erreurs reste bon)
-				const errorData = await response.json();
-				console.error("Erreur détaillée de l'API:", errorData);
-				throw new Error(
-					errorData.message || "Erreur lors de l'envoi du message.",
-				);
+				const errorData = await response.json().catch(() => null);
+				console.error("Erreur API détaillée :", errorData);
+
+				// Affiche le message d'erreur de l'API si disponible
+				const apiMessage =
+					errorData?.error?.message ||
+					errorData?.message ||
+					response.statusText;
+
+				throw new Error(`Erreur serveur (${response.status}) : ${apiMessage}`);
 			}
 
-			// ... (Le succès reste bon)
-			setStatus("Message envoyé avec succès !");
+			setStatus("✅ Message envoyé avec succès !");
 			setFormData({ name: "", firstName: "", email: "", message: "" });
 		} catch (error: any) {
-			setStatus(`Erreur : ${error.message}`);
-			console.error("Erreur d'envoi du formulaire:", error);
+			setStatus(`❌ ${error.message}`);
+			console.error("Erreur d'envoi du formulaire :", error);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -67,100 +59,69 @@ const ContactPage = () => {
 	return (
 		<section className="py-20">
 			<div className="container mx-auto px-4 text-center">
-				<div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center bg-gray-100 py-10">
-					<div className="md:w-1/2 text-center md:text-left">
-						<h1 className="text-center text-5xl md:text-4xl font-extrabold text-gray-800 leading-tight mb-4">
-							Contactez-nous
-						</h1>
-						<p className="text-xl md:text-1xl text-gray-600 max-w-4xl mx-auto md:mx-0 mb-8">
-							Nous serions ravis de discuter de votre projet. Laissez-nous un
-							message et nous vous recontacterons rapidement.
-						</p>
-					</div>
-				</div>
+				<h1 className="text-4xl font-bold mb-6">Contactez-nous</h1>
+				<p className="mb-10 text-gray-600 max-w-xl mx-auto">
+					Laissez-nous un message et nous vous recontacterons rapidement.
+				</p>
 
 				<form
 					onSubmit={handleSubmit}
-					className="max-w-xl mx-auto bg-white p-8 rounded-lg shadow-lg mt-20"
+					className="max-w-xl mx-auto bg-white p-8 rounded-lg shadow-lg"
 				>
-					<div className="mb-4">
-						<label
-							htmlFor="name"
-							className="block text-left text-gray-700 font-medium mb-2"
-						>
-							Nom
-						</label>
-						<input
-							type="text"
-							id="name"
-							name="name"
-							value={formData.name}
-							onChange={handleChange}
-							required
-							className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-						/>
-					</div>
-					<div className="mb-4">
-						<label
-							htmlFor="first-name"
-							className="block text-left text-gray-700 font-medium mb-2"
-						>
-							Prenom
-						</label>
-						<input
-							type="text"
-							id="firstName"
-							name="firstName"
-							value={formData.firstName}
-							onChange={handleChange}
-							required
-							className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-						/>
-					</div>
-					<div className="mb-4">
-						<label
-							htmlFor="email"
-							className="block text-left text-gray-700 font-medium mb-2"
-						>
-							E-mail
-						</label>
-						<input
-							type="email"
-							id="email"
-							name="email"
-							value={formData.email}
-							onChange={handleChange}
-							required
-							className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-						/>
-					</div>
-					<div className="mb-6">
-						<label
-							htmlFor="message"
-							className="block text-left text-gray-700 font-medium mb-2"
-						>
-							Message
-						</label>
-						<textarea
-							id="message"
-							name="message"
-							value={formData.message}
-							onChange={handleChange}
-							required
-							rows={4}
-							className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-						/>
-					</div>
+					{/* Nom */}
+					<input
+						type="text"
+						name="name"
+						placeholder="Nom"
+						value={formData.name}
+						onChange={handleChange}
+						required
+						className="w-full mb-4 p-3 border rounded-md"
+					/>
+					{/* Prénom */}
+					<input
+						type="text"
+						name="firstName"
+						placeholder="Prénom"
+						value={formData.firstName}
+						onChange={handleChange}
+						required
+						className="w-full mb-4 p-3 border rounded-md"
+					/>
+					{/* Email */}
+					<input
+						type="email"
+						name="email"
+						placeholder="Email"
+						value={formData.email}
+						onChange={handleChange}
+						required
+						className="w-full mb-4 p-3 border rounded-md"
+					/>
+					{/* Message */}
+					<textarea
+						name="message"
+						placeholder="Votre message..."
+						value={formData.message}
+						onChange={handleChange}
+						required
+						rows={5}
+						className="w-full mb-4 p-3 border rounded-md"
+					/>
+
 					<button
 						type="submit"
 						disabled={isSubmitting}
-						className="w-full bg-blue-600 text-white py-3 rounded-md font-bold hover:bg-blue-700 transition duration-300 disabled:bg-gray-400"
+						className="w-full bg-blue-600 text-white p-3 rounded-md font-bold hover:bg-blue-700 transition disabled:bg-gray-400"
 					>
 						{isSubmitting ? "Envoi..." : "Envoyer le message"}
 					</button>
+
 					{status && (
 						<p
-							className={`mt-4 text-sm ${status.startsWith("Erreur") ? "text-red-500" : "text-green-500"}`}
+							className={`mt-4 text-sm ${
+								status.startsWith("❌") ? "text-red-500" : "text-green-500"
+							}`}
 						>
 							{status}
 						</p>

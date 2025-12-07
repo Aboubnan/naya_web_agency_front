@@ -1,13 +1,12 @@
-// components/Modal.tsx
 import React from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation"; // Importation pour la navigation
 
-// Définissez le type pour les détails du service si nécessaire
+// Définissez le type pour les détails du service
 type ServiceDetails = {
 	title: string;
 	description: string;
 	icon: React.ReactElement;
-	// Ajoutez ici des champs supplémentaires pour les détails
 	details?: string; // Par exemple, un champ de détails plus long
 };
 
@@ -18,9 +17,11 @@ type ModalProps = {
 };
 
 const Modal = ({ isOpen, onClose, service }: ModalProps) => {
+	const router = useRouter(); // Initialisation du router pour la navigation
+
 	if (!isOpen || !service) return null;
 
-	// Redimensionner l'icône dans la modale (optionnel, on peut la rendre plus grande)
+	// Redimensionner l'icône dans la modale
 	const resizedIcon = React.isValidElement(service.icon)
 		? React.cloneElement(service.icon as React.ReactElement<any>, {
 				className: "w-16 h-16 text-blue-600",
@@ -31,6 +32,12 @@ const Modal = ({ isOpen, onClose, service }: ModalProps) => {
 	const detailedContent =
 		service.details ||
 		service.description + " Pour plus d'informations, veuillez nous contacter.";
+
+	// Fonction de redirection
+	const handleQuoteRequest = () => {
+		onClose(); // Fermer la modale
+		router.push("/contact"); // Rediriger l'utilisateur vers la page contact
+	};
 
 	return (
 		// Overlay (fond sombre semi-transparent)
@@ -59,10 +66,10 @@ const Modal = ({ isOpen, onClose, service }: ModalProps) => {
 						{service.title}
 					</h2>
 					<p className="text-gray-700 text-lg mb-6">{detailedContent}</p>
-					{/* Vous pouvez ajouter ici plus de détails, des listes, ou un bouton de contact */}
+					{/* Bouton de contact mis à jour pour rediriger */}
 					<button
 						className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-						onClick={onClose} // Action typique: rediriger ou ouvrir un formulaire de contact
+						onClick={handleQuoteRequest} // Appel de la nouvelle fonction de redirection
 					>
 						Demander un devis
 					</button>

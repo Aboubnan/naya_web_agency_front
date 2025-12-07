@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "NEXT_PUBLIC_DISABLE_TYPE_CHECK=true next build",
+    "build": "cross-env NEXT_PUBLIC_DISABLE_TYPE_CHECK=true next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -12,9 +12,11 @@
     "@emailjs/browser": "^4.4.1",
     "@heroicons/react": "^2.2.0",
     "@strapi/blocks-react-renderer": "^1.0.2",
+    "lucide-react": "^0.556.0",
     "next": "15.4.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-icons": "^5.5.0",
     "swiper": "^11.2.10"
   },
   "devDependencies": {
@@ -23,6 +25,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
     "husky": "^9.1.7",

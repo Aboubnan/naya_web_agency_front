@@ -1,9 +1,11 @@
+// components/Header.tsx
 "use client";
 
-// components/Header.tsx
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+// Importez votre hook d'authentification ici si vous en avez un (simulé ci-dessous)
+// const { user } = useAuth();
 
 const Header = () => {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -28,6 +30,7 @@ const Header = () => {
 				{/* Le bouton du menu burger visible uniquement jusqu'à 1280px */}
 				<div className="xl:hidden">
 					<button
+						type="button"
 						onClick={toggleMobileMenu}
 						className="text-gray-600 hover:text-blue-600 focus:outline-none transition-colors"
 						aria-label="Toggle mobile menu"
@@ -39,6 +42,7 @@ const Header = () => {
 							viewBox="0 0 24 24"
 							stroke="currentColor"
 						>
+							<title>Ouvrir le menu</title>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -52,6 +56,7 @@ const Header = () => {
 				{/* La navigation pour les grands écrans (visible à partir de 1280px) */}
 				<nav className="hidden xl:block">
 					<ul className="flex space-x-6">
+						{/* ... Vos liens de navigation existants ... */}
 						<li>
 							<Link
 								href="/"
@@ -86,40 +91,20 @@ const Header = () => {
 						</li>
 						<li>
 							<Link
-								href="/temoignages"
-								className="text-gray-600 hover:text-blue-600 font-medium"
-							>
-								Témoignages
-							</Link>
-						</li>
-						<li>
-							<Link
 								href="/contact"
 								className="text-gray-600 hover:text-blue-600 font-medium"
 							>
 								Contact
 							</Link>
 						</li>
-						<li>
-							<Link
-								href="/blog"
-								className="text-gray-600 hover:text-blue-600 font-medium"
-							>
-								Blog
-							</Link>
-						</li>
 					</ul>
 				</nav>
-
-				{/* Bouton de contact pour les grands écrans */}
-				<div className="hidden xl:block">
-					<Link
-						href="/contact"
-						className="bg-blue-600 text-white py-2 px-6 rounded-full font-bold hover:bg-blue-700 transition-colors"
-					>
-						Contactez-nous
-					</Link>
-				</div>
+				<Link
+					href="/contact"
+					className="bg-gray-200 text-blue-600 py-2 px-6 rounded-full font-bold hover:bg-gray-300 transition-colors"
+				>
+					Contactez-nous
+				</Link>
 			</div>
 
 			{/* Le menu mobile qui s'affiche ou se cache */}
@@ -127,6 +112,7 @@ const Header = () => {
 				<div className="xl:hidden mt-4">
 					<nav>
 						<ul className="flex flex-col space-y-4 items-center">
+							{/* ... Vos liens mobiles existants ... */}
 							<li>
 								<Link
 									href="/"
@@ -165,15 +151,6 @@ const Header = () => {
 							</li>
 							<li>
 								<Link
-									href="/temoignages"
-									className="block text-gray-800 hover:text-blue-600 font-medium text-lg"
-									onClick={toggleMobileMenu}
-								>
-									Témoignages
-								</Link>
-							</li>
-							<li>
-								<Link
 									href="/contact"
 									className="block text-gray-800 hover:text-blue-600 font-medium text-lg"
 									onClick={toggleMobileMenu}
@@ -183,17 +160,8 @@ const Header = () => {
 							</li>
 							<li>
 								<Link
-									href="/blog"
-									className="block text-gray-800 hover:text-blue-600 font-medium text-lg"
-									onClick={toggleMobileMenu}
-								>
-									Blog
-								</Link>
-							</li>
-							<li>
-								<Link
 									href="/contact"
-									className="block bg-blue-600 text-white py-2 px-6 rounded-full font-bold hover:bg-blue-700 transition-colors mt-4"
+									className="block bg-gray-200 text-blue-600 py-2 px-6 rounded-full font-bold hover:bg-gray-300 transition-colors mt-4"
 									onClick={toggleMobileMenu}
 								>
 									Contactez-nous

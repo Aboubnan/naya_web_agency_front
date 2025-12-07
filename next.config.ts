@@ -1,30 +1,30 @@
 // next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // 🛑 AJOUT CRITIQUE POUR CONTOURNER L'ERREUR DE TYPAGE PERSISTANTE
+    // Garder ceci pour le moment si vous avez des erreurs de build
     typescript: {
-        // !! WARN !!
-        // Dangerously allow production builds to successfully complete even if
-        // your project has type errors.
-        // !! WARN !!
         ignoreBuildErrors: true,
     },
-    // FIN AJOUT CRITIQUE
-
     eslint: {
         ignoreDuringBuilds: true,
     },
     images: {
         remotePatterns: [
+            // 🛑 CORRECTION : AJOUT DU DOMAINE DE PLACEHOLDER MANQUANT
             {
                 protocol: 'https',
-                // Le hostname est correct pour votre nouvelle API
+                hostname: 'placehold.co',
+            },
+            {
+                protocol: 'https',
+                // Le hostname de votre API de production
                 hostname: 'api.nayaweb.fr', 
             },
             // Autorisation pour le développement local
             {
                 protocol: 'http',
                 hostname: 'localhost',
+                port: '3001',
             },
         ],
     },
