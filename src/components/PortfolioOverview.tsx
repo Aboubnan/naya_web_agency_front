@@ -1,4 +1,3 @@
-// src/app/components/PortfolioOverview.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,12 +14,14 @@ interface Project {
 	slug: string;
 	shortDescription?: string;
 	description?: string;
-	imageUrl?: string; // URL relative depuis le back
-	imageAlt?: string;
+	image?: {
+		url: string;
+		alt?: string;
+	};
 	technologies?: string[];
 }
 
-// Données de démonstration si l’API ne répond pas
+// Données de démonstration si l'API ne répond pas
 const mockProjects: Project[] = [
 	{
 		id: 101,
@@ -28,8 +29,10 @@ const mockProjects: Project[] = [
 		slug: "analyse-financiere",
 		description:
 			"Développement d'un outil SaaS pour le suivi des marchés boursiers en temps réel.",
-		imageUrl: "https://placehold.co/600x400/10b981/ffffff?text=Financial+App",
-		imageAlt: "Plateforme d'analyse financière",
+		image: {
+			url: "https://placehold.co/600x400/10b981/ffffff?text=Financial+App",
+			alt: "Plateforme d'analyse financière",
+		},
 		technologies: ["React", "D3.js", "Python"],
 	},
 	{
@@ -38,8 +41,10 @@ const mockProjects: Project[] = [
 		slug: "reseau-social-animaux",
 		description:
 			"Création d'une communauté en ligne pour les propriétaires d'animaux de compagnie.",
-		imageUrl: "https://placehold.co/600x400/ef4444/ffffff?text=Pet+Social",
-		imageAlt: "Réseau social pour animaux",
+		image: {
+			url: "https://placehold.co/600x400/ef4444/ffffff?text=Pet+Social",
+			alt: "Réseau social pour animaux",
+		},
 		technologies: ["Vue.js", "Firebase", "Tailwind CSS"],
 	},
 ];
@@ -53,14 +58,10 @@ const PortfolioOverview = () => {
 		const fetchProjects = async () => {
 			try {
 				const response = await fetch(API_ENDPOINT);
-				if (!response.ok) {
-					throw new Error(
-						`La récupération des projets a échoué. Statut: ${response.status}`,
-					);
-				}
+				if (!response.ok) throw new Error(`Statut ${response.status}`);
 
 				const json = await response.json();
-				const projectArray = json.projects || json.data || json;
+				const projectArray: Project[] = json.projects || json.data || json;
 
 				if (Array.isArray(projectArray)) {
 					setProjects(projectArray);
@@ -71,7 +72,7 @@ const PortfolioOverview = () => {
 			} catch (err) {
 				console.error("Erreur lors de la récupération des projets:", err);
 				setError(
-					"Erreur réseau ou API. Utilisation des données de démonstration.",
+					"Erreur réseau ou API. Affichage des projets de démonstration.",
 				);
 				setProjects(mockProjects);
 			} finally {
@@ -110,14 +111,11 @@ const PortfolioOverview = () => {
 				{projects.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
 						{projects.map((project) => {
-							const fullImageUrl = project.imageUrl
-								? project.imageUrl.startsWith("http")
-									? project.imageUrl
-									: `${API_BASE_URL}${project.imageUrl}`
-								: `https://placehold.co/600x400/94a3b8/000000?text=${project.title.replace(
-										/\s/g,
-										"+",
-									)}`;
+							const fullImageUrl = project.image?.url
+								? project.image.url.startsWith("http")
+									? project.image.url
+									: `${API_BASE_URL}${project.image.url}`
+								: `https://placehold.co/600x400/94a3b8/000000?text=${project.title.replace(/\s/g, "+")}`;
 
 							return (
 								<Link
@@ -128,8 +126,8 @@ const PortfolioOverview = () => {
 									<div className="md:flex h-full">
 										<div className="relative w-full md:w-2/5 h-64 md:h-auto flex-shrink-0">
 											<Image
-												src={fullImageUrl} // ✅ utilisation de fullImageUrl
-												alt={project.imageAlt || project.title}
+												src={fullImageUrl}
+												alt={project.image?.alt || project.title}
 												fill
 												sizes="(max-width: 768px) 100vw, 33vw"
 												className="object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-90"
@@ -177,10 +175,9 @@ const PortfolioOverview = () => {
 					</div>
 				)}
 
-				{/* Bouton vers la page complète du portfolio */}
 				<div className="text-center mt-12">
 					<Link
-						href="/portfolio" // ✅ correction du lien
+						href="/portfolio"
 						className="inline-flex items-center px-10 py-3 text-lg bg-indigo-600 text-white font-bold rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-xl hover:shadow-indigo-500/50"
 					>
 						Voir tout le Portfolio
