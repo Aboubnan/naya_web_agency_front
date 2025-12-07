@@ -5,9 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowRight } from "lucide-react";
 
+// Configuration de l'API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const API_ENDPOINT = `${API_BASE_URL}/api/v1/projects?pagination[limit]=2`;
 
+// Interface de données (assurez-vous que cela correspond à votre API)
 interface Project {
 	id: number;
 	title: string;
@@ -15,11 +17,44 @@ interface Project {
 	shortDescription?: string;
 	description?: string;
 	image?: {
+		// <-- Structure imbriquée attendue
 		url: string;
 		alt?: string;
 	};
 	technologies?: string[];
 }
+
+// Données de démonstration (Mock Data)
+const mockProjects: Project[] = [
+	{
+		id: 101,
+		title: "Plateforme d'Analyse Financière",
+		slug: "analyse-financiere",
+		description:
+			"Développement d'un outil SaaS pour le suivi des marchés boursiers en temps réel, optimisant les stratégies d'investissement.",
+		shortDescription:
+			"Développement d'un outil SaaS pour le suivi des marchés boursiers.",
+		image: {
+			url: "https://placehold.co/600x400/10b981/ffffff?text=Financial+App",
+			alt: "Plateforme d'analyse financière",
+		},
+		technologies: ["React", "D3.js", "Python"],
+	},
+	{
+		id: 102,
+		title: "Réseau Social pour Animaux",
+		slug: "reseau-social-animaux",
+		description:
+			"Création d'une communauté en ligne complète pour les propriétaires d'animaux, incluant le partage de photos et des conseils vétérinaires.",
+		shortDescription:
+			"Création d'une communauté en ligne pour les propriétaires d'animaux de compagnie.",
+		image: {
+			url: "https://placehold.co/600x400/ef4444/ffffff?text=Pet+Social",
+			alt: "Réseau social pour animaux",
+		},
+		technologies: ["Vue.js", "Firebase", "Tailwind CSS"],
+	},
+];
 
 const PortfolioOverview = () => {
 	const [projects, setProjects] = useState<Project[]>([]);
@@ -46,6 +81,7 @@ const PortfolioOverview = () => {
 				setError(
 					"Erreur réseau ou API. Affichage des projets de démonstration.",
 				);
+				// Affichage des projets de démonstration en cas d'échec
 				setProjects(mockProjects);
 			} finally {
 				setIsLoading(false);
@@ -83,14 +119,27 @@ const PortfolioOverview = () => {
 				{projects.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
 						{projects.map((project) => {
-							const fullImageUrl = project.imageUrl
-								? project.imageUrl.startsWith("http")
-									? project.imageUrl
-									: `${API_BASE_URL}${project.imageUrl}`
-								: null;
-							if (!fullImageUrl) {
-								return null; // Saute le projet si pas d'image
+							// 🛑 CORRECTION CLÉ : Accès à l'URL via project.image?.url
+							const imageUrl = project.image?.url;
+							let fullImageUrl: string;
+
+							if (imageUrl) {
+								if (imageUrl.startsWith("http")) {
+									fullImageUrl = imageUrl;
+								} else {
+									// Utilisation de la variable API_BASE_URL (définie en haut)
+									fullImageUrl = `${API_BASE_URL}${imageUrl}`;
+								}
+							} else {
+								// Fallback/Placeholder
+								fullImageUrl = `https://placehold.co/600x400/94a3b8/000000?text=${project.title.replace(/\s/g, "+")}`;
 							}
+
+							const imageAltText = project.image?.alt || project.title;
+
+							// Un slug est nécessaire pour la navigation
+							if (!project.slug) return null;
+
 							return (
 								<Link
 									key={project.id}
@@ -100,8 +149,8 @@ const PortfolioOverview = () => {
 									<div className="md:flex h-full">
 										<div className="relative w-full md:w-2/5 h-64 md:h-auto flex-shrink-0">
 											<Image
-												src={fullImageUrl}
-												alt={project.title}
+												src={fullImageUrl} // <-- L'URL est garantie ici
+												alt={imageAltText}
 												fill
 												sizes="(max-width: 768px) 100vw, 33vw"
 												className="object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-90"
@@ -114,6 +163,7 @@ const PortfolioOverview = () => {
 													{project.title}
 												</h3>
 												<p className="text-gray-700 mb-4 line-clamp-3">
+													{/* Utiliser shortDescription si description n'est pas disponible */}
 													{project.description || project.shortDescription}
 												</p>
 												{project.technologies &&
