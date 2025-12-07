@@ -64,7 +64,9 @@ const PortfolioOverview = () => {
 					);
 				}
 
-				const data = await response.json();
+				const json = await response.json();
+				setProjects(json.projects || []); // ← ici on pointe vers le bon champ
+
 				const projectArray = Array.isArray(data) ? data : data.data || data;
 
 				if (projectArray && Array.isArray(projectArray)) {
