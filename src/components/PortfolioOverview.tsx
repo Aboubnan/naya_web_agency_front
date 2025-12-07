@@ -30,7 +30,7 @@ const mockProjects: Project[] = [
 		description:
 			"Développement d'un outil SaaS pour le suivi des marchés boursiers en temps réel.",
 		image: {
-			url: "https://placehold.co/600x400/10b981/ffffff?text=Financial+App",
+			url: "/uploads/project-alpha.jpg",
 			alt: "Plateforme d'analyse financière",
 		},
 		technologies: ["React", "D3.js", "Python"],
@@ -42,7 +42,7 @@ const mockProjects: Project[] = [
 		description:
 			"Création d'une communauté en ligne pour les propriétaires d'animaux de compagnie.",
 		image: {
-			url: "https://placehold.co/600x400/ef4444/ffffff?text=Pet+Social",
+			url: "/uploads/project-beta.jpg",
 			alt: "Réseau social pour animaux",
 		},
 		technologies: ["Vue.js", "Firebase", "Tailwind CSS"],
@@ -111,10 +111,10 @@ const PortfolioOverview = () => {
 				{projects.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
 						{projects.map((project) => {
-							const fullImageUrl = project.image?.url
-								? project.image.url.startsWith("http")
-									? project.image.url
-									: `${API_BASE_URL}${project.image.url}`
+							const fullImageUrl = project.imageUrl
+								? project.imageUrl.startsWith("http")
+									? project.imageUrl // URL absolue
+									: `${API_BASE_URL}${project.imageUrl}` // URL relative, préfixe avec l'API
 								: `https://placehold.co/600x400/94a3b8/000000?text=${project.title.replace(/\s/g, "+")}`;
 
 							return (
