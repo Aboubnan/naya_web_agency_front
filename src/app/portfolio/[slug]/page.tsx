@@ -28,8 +28,8 @@ const ProjectDetailPage = () => {
 				const res = await fetch(`${apiUrl}/api/v1/projects/${slug}`);
 				if (!res.ok) throw new Error("Projet non trouvé");
 
-				const data: Project = await res.json();
-				setProject(data);
+				const json = await res.json();
+				setProject(json.project);
 			} catch (err) {
 				console.error(err);
 			} finally {
