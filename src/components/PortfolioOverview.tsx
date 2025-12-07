@@ -5,26 +5,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowRight } from "lucide-react";
 
-// Configuration de l'API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Configuration de l'API (maintenue avec l'IP)
+const API_BASE_URL =
+	process.env.NEXT_PUBLIC_API_URL || "http://37.59.98.118:3001";
 const API_ENDPOINT = `${API_BASE_URL}/api/v1/projects?pagination[limit]=2`;
 
-// Interface de données (assurez-vous que cela correspond à votre API)
+// 🛑 CORRECTION 1 : L'interface reflète MAINTENANT la structure plate de l'API
 interface Project {
 	id: number;
 	title: string;
 	slug: string;
 	shortDescription?: string;
 	description?: string;
-	image?: {
-		// <-- Structure imbriquée attendue
-		url: string;
-		alt?: string;
-	};
+	imageUrl?: string; // <-- Structure plate
+	imageAlt?: string; // <-- Structure plate
 	technologies?: string[];
 }
 
-// Données de démonstration (Mock Data)
+// Données de démonstration mises à jour pour correspondre à la structure plate
 const mockProjects: Project[] = [
 	{
 		id: 101,
@@ -34,10 +32,8 @@ const mockProjects: Project[] = [
 			"Développement d'un outil SaaS pour le suivi des marchés boursiers en temps réel, optimisant les stratégies d'investissement.",
 		shortDescription:
 			"Développement d'un outil SaaS pour le suivi des marchés boursiers.",
-		image: {
-			url: "https://placehold.co/600x400/10b981/ffffff?text=Financial+App",
-			alt: "Plateforme d'analyse financière",
-		},
+		imageUrl: "https://placehold.co/600x400/10b981/ffffff?text=Financial+App",
+		imageAlt: "Plateforme d'analyse financière",
 		technologies: ["React", "D3.js", "Python"],
 	},
 	{
@@ -48,10 +44,8 @@ const mockProjects: Project[] = [
 			"Création d'une communauté en ligne complète pour les propriétaires d'animaux, incluant le partage de photos et des conseils vétérinaires.",
 		shortDescription:
 			"Création d'une communauté en ligne pour les propriétaires d'animaux de compagnie.",
-		image: {
-			url: "https://placehold.co/600x400/ef4444/ffffff?text=Pet+Social",
-			alt: "Réseau social pour animaux",
-		},
+		imageUrl: "https://placehold.co/600x400/ef4444/ffffff?text=Pet+Social",
+		imageAlt: "Réseau social pour animaux",
 		technologies: ["Vue.js", "Firebase", "Tailwind CSS"],
 	},
 ];
@@ -68,7 +62,11 @@ const PortfolioOverview = () => {
 				if (!response.ok) throw new Error(`Statut ${response.status}`);
 
 				const json = await response.json();
-				const projectArray: Project[] = json.projects || json.data || json;
+
+				// Le tableau de projets est renvoyé à la racine pour l'endpoint paginé
+				const projectArray: Project[] = Array.isArray(json)
+					? json
+					: json.projects || json.data || [];
 
 				if (Array.isArray(projectArray)) {
 					setProjects(projectArray);
@@ -81,7 +79,6 @@ const PortfolioOverview = () => {
 				setError(
 					"Erreur réseau ou API. Affichage des projets de démonstration.",
 				);
-				// Affichage des projets de démonstration en cas d'échec
 				setProjects(mockProjects);
 			} finally {
 				setIsLoading(false);
@@ -119,15 +116,15 @@ const PortfolioOverview = () => {
 				{projects.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
 						{projects.map((project) => {
-							// 🛑 CORRECTION CLÉ : Accès à l'URL via project.image?.url
-							const imageUrl = project.image?.url;
+							// 🛑 CORRECTION CLÉ 2 : Utiliser project.imageUrl (Structure plate)
+							const imageUrl = project.imageUrl;
 							let fullImageUrl: string;
 
 							if (imageUrl) {
 								if (imageUrl.startsWith("http")) {
 									fullImageUrl = imageUrl;
 								} else {
-									// Utilisation de la variable API_BASE_URL (définie en haut)
+									// Utilisation de la variable API_BASE_URL (http://37.59.98.118:3001)
 									fullImageUrl = `${API_BASE_URL}${imageUrl}`;
 								}
 							} else {
@@ -135,7 +132,8 @@ const PortfolioOverview = () => {
 								fullImageUrl = `https://placehold.co/600x400/94a3b8/000000?text=${project.title.replace(/\s/g, "+")}`;
 							}
 
-							const imageAltText = project.image?.alt || project.title;
+							// 🛑 CORRECTION CLÉ 3 : Utiliser project.imageAlt
+							const imageAltText = project.imageAlt || project.title;
 
 							// Un slug est nécessaire pour la navigation
 							if (!project.slug) return null;
